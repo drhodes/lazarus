@@ -1,8 +1,10 @@
+
+
 use regex::{Regex};
 
 pub type Spanned<Tok, Loc, Error> = Result<(Loc, Tok, Loc), Error>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Tok {
     Symbol(String),
     Float(f64),
@@ -12,7 +14,8 @@ pub enum Tok {
     Dot,
     Space,
 }
-    
+pub use Tok::*;
+
 #[derive(Debug)]
 pub enum LexError {}
 
@@ -30,7 +33,10 @@ impl Lexer {
 impl Iterator for Lexer {
     type Item = Spanned<Tok, usize, LexError>;
 
-    fn next(&mut self) -> Option<Self::Item> {       
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.idx >= self.prog.len() {
+            return None
+        }
         let symbol_pat = Regex::new(r#"[a-zA-Z]+"#).unwrap();
         let float_pat = Regex::new(r"[-+]?[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?").unwrap();
         let int_pat = Regex::new(r"[-+]?[0-9]+").unwrap();
@@ -83,21 +89,20 @@ impl Iterator for Lexer {
             None => {},
         }
         
-        let c = self.prog.chars().next().unwrap();
-
-        if c == '(' || c == ')' || c == '.' {
-            let tok = ( self.idx,
-                        match c {
-                            '(' => Tok::LParen,
-                            ')' => Tok::RParen,
-                            '.' => Tok::Dot,
-                            _ => panic!("The impossible happened.")
-                        },
-                        self.idx + 1);
+        if let Some(c) = self.prog.chars().nth(self.idx) {
             self.idx += 1;
-            return Some(Ok(tok));
-        }            
-        return None;
+            if c == ')' {
+                return Some(Ok((self.idx-1, Tok::RParen, self.idx)));
+            } else if c == '(' {
+                return Some(Ok((self.idx-1, Tok::LParen, self.idx)));
+            } else if c == '.' {
+                return Some(Ok((self.idx-1, Tok::Dot, self.idx)));
+            } else {
+                return None;
+            }
+        } else {
+            return None;
+        }
     }
 }
 
@@ -105,6 +110,12 @@ impl Iterator for Lexer {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn lex_some() {
+        let  lexer = Lexer::new("(())");
+        let toks: Vec<Result<(usize, Tok, usize), LexError>> = lexer.collect();
+    }
     
     #[test]    
     fn lex_symbol() {
@@ -116,9 +127,21 @@ mod tests {
         } else {
             panic!("")
         }
-        
     }
 
+    #[test]    
+    fn lex_rparen() {
+        let mut lexer = Lexer::new(")");
+        if let Some(Ok((span0, tok, span1))) = lexer.next() {
+            assert_eq!(span0, 0);
+            assert_eq!(tok, Tok::RParen);
+            assert_eq!(span1, 1);
+        } else {
+            panic!("")
+        }
+    }
+
+    
     #[test]    
     fn lex_float() {
         let mut lexer = Lexer::new("123.123 asdf");
