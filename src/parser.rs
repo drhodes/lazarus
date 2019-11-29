@@ -1,5 +1,5 @@
-use crate::token::*;
-use crate::token;
+use crate::lexer::*;
+use crate::lexer;
 
 type Id = usize;
 
@@ -27,7 +27,7 @@ struct Node {
 }
 
 impl Node {
-    fn token(tok: token::Tok) -> Node {
+    fn token(tok: lexer::Tok) -> Node {
         Node{rule: Rule::Token(tok), nodes: vec!() }
     }
     fn empty() -> Node {
@@ -40,13 +40,13 @@ impl Node {
 
 // ------------------------------------------------------------------
 struct Parser {
-    toks: Vec<token::Tok>,
+    toks: Vec<lexer::Tok>,
     idx: usize,
     ast: Node,
 }
 
 impl Parser {
-    fn new(toks: Vec<token::Tok>) -> Parser {
+    fn new(toks: Vec<lexer::Tok>) -> Parser {
         Parser{toks, idx:0, ast: Node::empty()}
     }
 
@@ -162,7 +162,7 @@ impl Parser {
         println!("int");
         let idx = self.idx;
         match self.next_token() {
-            Some(tok@token::Int(_)) => {
+            Some(tok@lexer::Int(_)) => {
                 return Ok(Node::token(tok.clone()));
             },
             otherwise =>  {
@@ -175,7 +175,7 @@ impl Parser {
         println!("float");
         let idx = self.idx;
         match self.next_token() {
-            Some(tok@token::Float(_)) => {
+            Some(tok@lexer::Float(_)) => {
                 Ok(Node::token(tok.clone()))
             },
             otherwise => {
@@ -188,7 +188,7 @@ impl Parser {
         println!("symbol");
         let idx = self.idx;
         match self.next_token() {
-            Some(tok@token::Symbol(_)) => {
+            Some(tok@lexer::Symbol(_)) => {
                 Ok(Node::token(tok.clone()))
             },
             otherwise =>  {
@@ -210,7 +210,7 @@ mod tests {
         let mut toks = vec!();
         for span in lexer {
             if let Ok((_, tok, _)) = span {
-                if tok == token::Space {
+                if tok == lexer::Space {
                     continue;
                 }
                 toks.push(tok);
@@ -229,9 +229,6 @@ mod tests {
         match results {
             Ok(xs) => {
                 println!("{:?}", xs);
-                panic!("asdf");
-                // assert_eq!(xs.nodes.len(), 1);
-                // assert_eq!(xs.nodes[0].len(), 5);
             },
             Err(msg) => {
                 panic!(msg);
@@ -292,7 +289,7 @@ mod tests {
         let mut toks = vec!();
         for span in lexer {
             if let Ok((_, tok, _)) = span {
-                if tok == token::Space {
+                if tok == lexer::Space {
                     continue;
                 }
                 toks.push(tok);
@@ -312,7 +309,7 @@ mod tests {
         let mut toks = vec!();
         for span in lexer {
             if let Ok((_, tok, _)) = span {
-                if tok == token::Space {
+                if tok == lexer::Space {
                     continue;
                 }
                 toks.push(tok);
@@ -326,4 +323,3 @@ mod tests {
         println!("{:?}", temp);
     }
 }
-

@@ -4,4 +4,4 @@
 #![allow(unused_variables)]
 
 mod parser;
-mod token;
+mod lexer;
