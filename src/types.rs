@@ -28,11 +28,13 @@ pub type NodeId = u64;
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct Symb {
     pub name: String,
+    pub filename: String,
+    pub pos: usize,
 }
 
 impl Symb {
-    pub fn new(name: &str) -> Symb {
-        Symb{name: name.to_owned()}
+    pub fn new(name: &str, filename: String, pos: usize) -> Symb {
+        Symb{name: name.to_owned(), filename, pos }
     }
 }
 

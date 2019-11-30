@@ -69,8 +69,8 @@ mod tests {
     use super::*;
     #[test]
     fn env_test_set_variable() {
-        let x = Symb::new("x");
-        let y = Symb::new("y");
+        let x = Symb::new("x", "env.rs".to_owned(), 42);
+        let y = Symb::new("y", "env.rs".to_owned(), 42);
 
         let mut global = Env::new();
         let mut inner = Env::new();
@@ -113,8 +113,8 @@ mod tests {
     #[test]
     fn env_test_lookup() {
         let mut global = Env::new();
-        let x = Symb::new("x");
-        let y = Symb::new("y");
+        let x = Symb::new("x", "env.rs".to_owned(), 42);
+        let y = Symb::new("y", "env.rs".to_owned(), 42);
         
         global.define_variable(&x, 1);
         

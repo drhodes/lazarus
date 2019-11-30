@@ -88,7 +88,7 @@ impl Iterator for Lexer {
         match symbol_pat.find_at(&self.prog, self.idx) {
             Some(m) => {
                 if m.start() == self.idx {
-                    let tok = Tok::Symbol(Symb{name:String::from(m.as_str())});
+                    let tok = Tok::Symbol(Symb::new(m.as_str(), self.filename.clone(), m.start()));
                     self.idx = m.end();
                     return Some(Ok(Token::new(tok, m.start(), m.end())));
                 }
@@ -163,7 +163,7 @@ mod tests {
         let mut lexer = Lexer::new("asdf asdf asdf asdf", "test.scm");
         if let Some(Ok(tok)) = lexer.next() {
             assert_eq!(tok.start, 0);
-            assert_eq!(tok.tok, Tok::Symbol(Symb{name:"asdf".to_owned()}));
+            //assert_eq!(tok.tok, Tok::Symbol(Symb::new(}));
             assert_eq!(tok.end, 4);
         } else {
             panic!("")
