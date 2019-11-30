@@ -1,12 +1,6 @@
 use regex::Regex;
+use crate::types::*;
 
-//pub type Spanned<Tok, Loc, Error> = Result<(Loc, Tok, Loc), Error>;
-#[derive(Debug, PartialEq, Clone)]
-pub struct Token {
-    pub tok: Tok,
-    pub start: usize,
-    pub end: usize,
-}
 
 impl Token {
     pub fn new(tok: Tok, start: usize, end: usize) -> Token {
@@ -15,59 +9,48 @@ impl Token {
 
     pub fn is_float(&self) -> bool {
         match self.tok {
-            Float(_) => true,
+            Tok::Float(_) => true,
             _ => false,
         }
     }
     pub fn is_int(&self) -> bool {
         match self.tok {
-            Int(_) => true,
+            Tok::Int(_) => true,
             _ => false,
         }
     }
     pub fn is_symbol(&self) -> bool {
         match self.tok {
-            Symbol(_) => true,
+            Tok::Symbol(_) => true,
             _ => false,
         }
     }
     pub fn is_lparen(&self) -> bool {
         match self.tok {
-            LParen => true,
+            Tok::LParen => true,
             _ => false,
         }
     }
     pub fn is_rparen(&self) -> bool {
         match self.tok {
-            RParen => true,
+            Tok::RParen => true,
             _ => false,
         }
     }
     pub fn is_dot(&self) -> bool {
         match self.tok {
-            Dot => true,
+            Tok::Dot => true,
             _ => false,
         }
     }
     pub fn is_space(&self) -> bool {
         match self.tok {
-            Space => true,
+            Tok::Space => true,
             _ => false,
         }
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
-pub enum Tok {
-    Symbol(String),
-    Float(f64),
-    Int(i64),
-    LParen,
-    RParen,
-    Dot,
-    Space,
-}
-pub use Tok::*;
 
 #[derive(Debug)]
 pub enum LexError {}
@@ -105,7 +88,7 @@ impl Iterator for Lexer {
         match symbol_pat.find_at(&self.prog, self.idx) {
             Some(m) => {
                 if m.start() == self.idx {
-                    let tok = Tok::Symbol(String::from(m.as_str()));
+                    let tok = Tok::Symbol(Symb{name:String::from(m.as_str())});
                     self.idx = m.end();
                     return Some(Ok(Token::new(tok, m.start(), m.end())));
                 }
@@ -141,7 +124,7 @@ impl Iterator for Lexer {
             Some(m) => {
                 if m.start() == self.idx {
                     self.idx = m.end();
-                    return Some(Ok(Token::new(Space, m.start(), m.end())));
+                    return Some(Ok(Token::new(Tok::Space, m.start(), m.end())));
                 }
             }
             None => {}
@@ -180,7 +163,7 @@ mod tests {
         let mut lexer = Lexer::new("asdf asdf asdf asdf", "test.scm");
         if let Some(Ok(tok)) = lexer.next() {
             assert_eq!(tok.start, 0);
-            assert_eq!(tok.tok, Tok::Symbol("asdf".to_owned()));
+            assert_eq!(tok.tok, Tok::Symbol(Symb{name:"asdf".to_owned()}));
             assert_eq!(tok.end, 4);
         } else {
             panic!("")
@@ -207,7 +190,7 @@ mod tests {
 
         if let Some(Ok(tok)) = float {
             assert_eq!(tok.start, 0);
-            assert_eq!(tok.tok, Float(123.123));
+            assert_eq!(tok.tok, Tok::Float(123.123));
             assert_eq!(tok.end, 7);
         } else {
             panic!("")
@@ -222,7 +205,7 @@ mod tests {
 
         if let Some(Ok(tok)) = int {
             assert_eq!(tok.start, 0);
-            assert_eq!(tok.tok, Int(123));
+            assert_eq!(tok.tok, Tok::Int(123));
             assert_eq!(tok.end, 3);
         } else {
             panic!("")

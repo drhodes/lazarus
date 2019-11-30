@@ -1,33 +1,135 @@
+use std::collections::HashMap;
+use std::cell::RefCell;
+use std::cell::Cell;
+use std::rc::Rc;
+use crate::types::*;
 
-struct Env {    
-    table: HashMap<String, Id>,
-    outer: Option<Box<Env>>,
-}
-
+// ------------------------------------------------------------------
+#[derive(Debug)]
+struct Env {
+    frame: HashMap<Symb, NodeId>,
+    /// if enclosing is None, then it is the global environment.
+    enclosing: Option<Box<Env>>,
+} 
 
 impl Env {
-    fn new(mut parms: Vec<String>, mut args: Vec<Id>, outer: Option<Box<Env>>) -> Env {
-        assert_eq!(parms.len() == args.len(), true);
-        let mut table = HashMap::new();
-        while parms.len() > 0 {
-            table.insert(parms.remove(0), args.remove(0));
-        }
-        Env{table, outer}
+    fn new() -> Env {
+        Env{frame: HashMap::new(), enclosing:None}
+    }
+    
+    fn is_global(&self) -> bool {
+        self.enclosing.is_none()
     }
    
-    fn find(&mut self, var: &String) -> Option<&mut Id> {
-        if self.table.contains_key(var) {
-            return self.table.get_mut(var);
-        } else if self.outer.is_some() {
-            return self.find(var);
-        } else {
-            return None;
+    fn lookup(&self, sym: &Symb) -> Option<NodeId> {
+        match self.frame.get(sym) {
+            Some(id) => Some(*id),
+            None => {
+                match &self.enclosing {
+                    None => None,
+                    Some(env) => env.lookup(sym),
+                }
+            }
         }
     }
 
-    fn standard_env() -> Env {
-        let mut env = Env::new(vec!(), vec!(), None);
-        env.table.insert(String::from("abs"), 0);
-        return env;
+    // think about value of type Node here, should be expression?
+    // whatever happens expressions are going to be heavy weight
+    // because there will be a record of where each value is created,
+    // thereby allowing superduper debugability.
+    
+    fn define_variable(&mut self, var: &Symb, id: NodeId) {        
+        self.frame.insert(var.clone(), id);
+    }
+    
+    fn set_variable_value(&mut self, var: &Symb, id: NodeId) -> Result<(), EvalErr> {
+        match &mut self.frame.get(var) {
+            Some(_) => {
+                // found the variable.
+                self.define_variable(var, id);
+                Ok(())
+            },
+            None => {
+                // didn't find the variable, look in the enclosing environment
+                if self.is_global() {
+                    Err(EvalErr::new("undefined variable: ", "asdf".to_owned(), 666))
+                } else {
+                    let env = self.enclosing.as_mut().unwrap();
+                    env.set_variable_value(var, id)
+                }
+            }
+        }
     }
 }
+
+
+// ------------------------------------------------------------------
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn env_test_set_variable() {
+        let x = Symb::new("x");
+        let y = Symb::new("y");
+
+        let mut global = Env::new();
+        let mut inner = Env::new();
+        
+        global.define_variable(&x, 1);
+        inner.define_variable(&y, 2);
+
+        inner.enclosing = Some(box global);
+
+        println!("{:?}", inner);
+        
+        match inner.lookup(&y) {
+            Some(id) => assert_eq!(id, 2),
+            None => panic!("lookup fails")
+        }
+        match inner.lookup(&x) {
+            Some(id) => assert_eq!(id, 1),
+            None => panic!("lookup fails")
+        }
+
+        if let Err(msg) = inner.set_variable_value(&x, 3) {
+            panic!(msg);
+        }
+        if let Err(msg) = inner.set_variable_value(&y, 4) {
+            panic!(msg);
+        }
+        
+        match inner.lookup(&y) {
+            Some(id) => assert_eq!(id, 4),
+            None => panic!("lookup fails")
+        }
+        
+        match inner.lookup(&x) {
+            Some(id) => assert_eq!(id, 3),
+            None => panic!("lookup fails")
+        }
+        
+    }
+    
+    #[test]
+    fn env_test_lookup() {
+        let mut global = Env::new();
+        let x = Symb::new("x");
+        let y = Symb::new("y");
+        
+        global.define_variable(&x, 1);
+        
+        let mut inner = Env::new();
+        inner.enclosing = Some(box global);
+        inner.define_variable(&y, 2);
+
+        match inner.lookup(&y) {
+            Some(id) => assert_eq!(id, 2),
+            None => panic!("lookup fails")
+        }
+        match inner.lookup(&x) {
+            Some(id) => assert_eq!(id, 1),
+            None => panic!("lookup fails")
+        }
+    }
+}
+

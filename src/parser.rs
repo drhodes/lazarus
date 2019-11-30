@@ -1,16 +1,6 @@
 use crate::lexer::*;
 use crate::lexer;
-
-type Id = usize;
-
-// struct LineError {
-//     filename: String,
-    
-// }
-
-// struct ParserError {
-    
-// }
+use crate::types::*;
 
 type ParserResult = Result<Node, String>;
 
@@ -18,39 +8,11 @@ fn err(msg: &str) -> ParserResult {
     Err(msg.to_owned())
 }
 
-#[derive(Debug)]
-enum Rule {
-    Token(lexer::Token),
-    Int,
-    Expr,
-    Exprs,
-    List,
-    Empty,
-    EmptyList,
-}
-
-#[derive(Debug)]
-struct Node {
-    rule: Rule,
-    nodes: Vec<Node>,
-}
-
-impl Node {
-    fn token(tok: lexer::Token) -> Node {
-        Node{rule: Rule::Token(tok), nodes: vec!() }
-    }
-    fn empty() -> Node {
-        Node{rule: Rule::Empty, nodes: vec!() }
-    }
-    fn new(rule: Rule, nodes: Vec<Node>) -> Node {
-        Node{rule, nodes}
-    }
-}
 
 // ------------------------------------------------------------------
 struct Parser {
     filename: String,
-    toks: Vec<lexer::Token>,
+    toks: Vec<Token>,
     idx: usize,
     ast: Node,
 }
@@ -62,7 +24,7 @@ impl Parser {
         
         for span in lexer {
             if let Ok(token) = span {
-                if token.tok == lexer::Space {
+                if token.tok == Tok::Space {
                     continue;
                 }
                 toks.push(token);
@@ -102,8 +64,8 @@ impl Parser {
             self.filename.clone() +  ": " + &pos
         }
     }
-    
-    
+
+    // RULES ------------------------------------------------------------------    
     fn list(&mut self) -> ParserResult {
         println!("list");
         let idx = self.idx;
@@ -247,7 +209,7 @@ mod tests {
         let mut toks = vec!();
         for span in lexer {
             if let Ok(token) = span {
-                if token.tok == lexer::Space {
+                if token.tok == Tok::Space {
                     continue;
                 }
                 toks.push(token);
@@ -266,7 +228,7 @@ mod tests {
     #[test]
     // this test should fail because the list doesn't have a close paren.
     fn parse_nested_list_2() {
-        let mut parser = get_parser("(1 2 3 4");
+        let mut parser = get_parser("(1.0 2 asdf 3 4");
         let results = parser.list();
 
         match results {
@@ -281,7 +243,7 @@ mod tests {
     
     #[test]
     fn parse_nested_list() {
-        let mut parser = get_parser("(1 2 3 4 (5 6))");
+        let mut parser = get_parser("(1 2.0 three 4 (5 6))");
         let results = parser.list();
 
         match results {
