@@ -11,7 +11,7 @@ fn err(msg: &str) -> ParserResult {
 
 #[derive(Debug)]
 enum Rule {
-    Token(Tok),
+    Token(lexer::Token),
     Int,
     Expr,
     Exprs,
@@ -27,7 +27,7 @@ struct Node {
 }
 
 impl Node {
-    fn token(tok: lexer::Tok) -> Node {
+    fn token(tok: lexer::Token) -> Node {
         Node{rule: Rule::Token(tok), nodes: vec!() }
     }
     fn empty() -> Node {
@@ -40,17 +40,17 @@ impl Node {
 
 // ------------------------------------------------------------------
 struct Parser {
-    toks: Vec<lexer::Tok>,
+    toks: Vec<lexer::Token>,
     idx: usize,
     ast: Node,
 }
 
 impl Parser {
-    fn new(toks: Vec<lexer::Tok>) -> Parser {
+    fn new(toks: Vec<lexer::Token>) -> Parser {
         Parser{toks, idx:0, ast: Node::empty()}
     }
 
-    fn next_token(&mut self) -> Option<&Tok> {
+    fn next_token(&mut self) -> Option<&Token> {
         if self.idx >= self.toks.len() {
             None
         } else {
@@ -129,7 +129,7 @@ impl Parser {
         let idx = self.idx;
         match self.next_token() {
             Some(tok) => {
-                if tok == &LParen {
+                if tok.is_lparen() {
                     Ok(Node::token(tok.clone()))
                 } else {
                     self.err(idx, "lparen got wrong token")
@@ -145,9 +145,9 @@ impl Parser {
         println!("rparen");
         let idx = self.idx;
         match self.next_token() {
-            Some(tok) => {
-                if tok == &RParen {
-                    Ok(Node::token(tok.clone()))
+            Some(token) => {
+                if token.is_rparen() {
+                    Ok(Node::token(token.clone()))
                 } else {
                     self.err(idx, "rparen got wrong token")
                 }
@@ -157,63 +157,68 @@ impl Parser {
             }
         }
     }
-
+    
     fn int(&mut self) -> ParserResult {
         println!("int");
         let idx = self.idx;
-        match self.next_token() {
-            Some(tok@lexer::Int(_)) => {
-                return Ok(Node::token(tok.clone()));
-            },
-            otherwise =>  {
-                self.err(idx, "ok")                
-            },
+        if let Some(token) = self.next_token() {
+            if token.is_int() {
+                Ok(Node::token(token.clone()))
+            } else {
+                self.err(idx, "todo int err msg")
+            }
+        } else {
+            self.err(idx, "todo int err msg 2")
         }
     }
     
     fn float(&mut self) -> ParserResult {
         println!("float");
         let idx = self.idx;
-        match self.next_token() {
-            Some(tok@lexer::Float(_)) => {
-                Ok(Node::token(tok.clone()))
-            },
-            otherwise => {
-                self.err(idx, "ok")                
-            },
+        if let Some(token) = self.next_token() {
+            if token.is_float() {
+                Ok(Node::token(token.clone()))
+            } else {
+                self.err(idx, "todo float err msg")
+            }
+        } else {
+            self.err(idx, "todo float err msg 2")
         }
     }
-
+    
     fn symbol(&mut self) -> ParserResult {
         println!("symbol");
         let idx = self.idx;
-        match self.next_token() {
-            Some(tok@lexer::Symbol(_)) => {
-                Ok(Node::token(tok.clone()))
-            },
-            otherwise =>  {
-                self.err(idx, "ok")                
-            },
+        if let Some(token) = self.next_token() {
+            if token.is_symbol() {
+                Ok(Node::token(token.clone()))
+            } else {
+                self.err(idx, "todo symbol err msg")
+            }
+        } else {
+            self.err(idx, "todo symbol err msg 2")
         }
     }
+
 }
 
 // ------------------------------------------------------------------
 // TESTS.
 
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    fn get_tokens(s: &str) -> Vec<Tok> {
-        let lexer = Lexer::new(s);
+    fn get_tokens(s: &str) -> Vec<Token> {
+        let lexer = Lexer::new(s, "test.scm");
         let mut toks = vec!();
         for span in lexer {
-            if let Ok((_, tok, _)) = span {
-                if tok == lexer::Space {
+            if let Ok(token) = span {
+                if token.tok == lexer::Space {
                     continue;
                 }
-                toks.push(tok);
+                toks.push(token);
             } else {
                 panic!("failed to lex a string");
             }
@@ -285,11 +290,11 @@ mod tests {
 
     #[test]
     fn parse_lparen() {
-        let lexer = Lexer::new("( ( ( ( ) ) ) )");
+        let lexer = Lexer::new("( ( ( ( ) ) ) )", "test.scm");
         let mut toks = vec!();
         for span in lexer {
-            if let Ok((_, tok, _)) = span {
-                if tok == lexer::Space {
+            if let Ok(tok) = span {
+                if tok.tok == lexer::Space {
                     continue;
                 }
                 toks.push(tok);
@@ -305,11 +310,11 @@ mod tests {
     
     #[test]
     fn parse_int() {
-        let lexer = Lexer::new("1 2 3");
+        let lexer = Lexer::new("1 2 3", "test.scm");
         let mut toks = vec!();
         for span in lexer {
-            if let Ok((_, tok, _)) = span {
-                if tok == lexer::Space {
+            if let Ok(tok) = span {
+                if tok.tok == lexer::Space {
                     continue;
                 }
                 toks.push(tok);
