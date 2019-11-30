@@ -3,6 +3,15 @@ use crate::lexer;
 
 type Id = usize;
 
+// struct LineError {
+//     filename: String,
+    
+// }
+
+// struct ParserError {
+    
+// }
+
 type ParserResult = Result<Node, String>;
 
 fn err(msg: &str) -> ParserResult {
@@ -40,14 +49,29 @@ impl Node {
 
 // ------------------------------------------------------------------
 struct Parser {
+    filename: String,
     toks: Vec<lexer::Token>,
     idx: usize,
     ast: Node,
 }
 
 impl Parser {
-    fn new(toks: Vec<lexer::Token>) -> Parser {
-        Parser{toks, idx:0, ast: Node::empty()}
+    fn new(lexer: lexer::Lexer) -> Parser {
+        let mut toks = vec!();
+        let filename = lexer.filename.clone();
+        
+        for span in lexer {
+            if let Ok(token) = span {
+                if token.tok == lexer::Space {
+                    continue;
+                }
+                toks.push(token);
+            } else {
+                panic!("failed to lex a string");
+            }
+        }
+ 
+        Parser{filename, toks, idx:0, ast: Node::empty()}
     }
 
     fn next_token(&mut self) -> Option<&Token> {
@@ -65,27 +89,36 @@ impl Parser {
         err(msg)
     }
     
-    fn list(&mut self) -> ParserResult {
-        println!("list");
-        println!("{:?}", self.toks);
-        let idx = self.idx;
-
-        // this nesting is awful.        
-        if let Ok(_) = self.lparen() {
-            if let Ok(x) = self.exprs() {
-                if let Ok(_) = self.rparen() {
-                    Ok(Node::new(Rule::List, vec!(x)))
-                } else {
-                    self.err(idx, "list:rparen")
-                }
-            } else {
-                self.err(idx, "list:expr")
-            }
-        } else {
-            self.err(idx, "list:lparen")
-        }
+    fn err_plus(&mut self, cursor: usize, msg1: String, msg2: &str) -> ParserResult {
+        self.idx = cursor;
+        Err(msg1 + "\n " + &self.current_token_pos() + msg2)
     }
 
+    fn current_token_pos(&self) -> String {
+        if self.toks.len() == 0 {
+            self.filename.clone() +  ": end of file"
+        } else {
+            let pos = format!("char: {}", self.toks[0].start).to_owned();
+            self.filename.clone() +  ": " + &pos
+        }
+    }
+    
+    
+    fn list(&mut self) -> ParserResult {
+        println!("list");
+        let idx = self.idx;
+
+        match (||{
+            self.lparen()?;      
+            let xs = self.exprs()?;
+            self.rparen()?;        
+            Ok(xs)
+        })() as ParserResult {
+            Ok(xs) => Ok(Node::new(Rule::List, vec!(xs))),
+            Err(msg) => self.err_plus(idx, msg, "list fails"),
+        }
+    }
+    
     fn expr(&mut self) -> ParserResult {
         println!("expr");
         let idx = self.idx;
@@ -102,11 +135,11 @@ impl Parser {
             return Ok(Node::new(Rule::Expr, vec!(n)));
         }
 
-        if let Ok(n) = self.list() {
-            return Ok(Node::new(Rule::Expr, vec!(n)));
+        let result = self.list();
+        match result {
+            Ok(n) => Ok(Node::new(Rule::Expr, vec!(n))),
+            Err(msg) => self.err_plus(idx, msg + &self.current_token_pos(), "expr fails to parse expr"),
         }
-
-        self.err(idx, "expr fails to parse expr")
     }
 
     // this can't fail.
@@ -199,7 +232,6 @@ impl Parser {
             self.err(idx, "todo symbol err msg 2")
         }
     }
-
 }
 
 // ------------------------------------------------------------------
@@ -226,10 +258,31 @@ mod tests {
         toks
     }
 
+    fn get_parser(s: &str) -> Parser {
+        let lexer = Lexer::new(s, "test.scm");
+        Parser::new(lexer)
+    }
+
+    #[test]
+    // this test should fail because the list doesn't have a close paren.
+    fn parse_nested_list_2() {
+        let mut parser = get_parser("(1 2 3 4");
+        let results = parser.list();
+
+        match results {
+            Err(msg) => { 
+                print!("{:?}", msg);
+            },
+            Ok(xs) => {
+                panic!("this was supposed to fail");
+            },
+        } 
+    }
+    
     #[test]
     fn parse_nested_list() {
-        let mut parser = Parser::new(get_tokens("(1 2 3 4 (5 6))"));
-        let results = parser.exprs();
+        let mut parser = get_parser("(1 2 3 4 (5 6))");
+        let results = parser.list();
 
         match results {
             Ok(xs) => {
@@ -243,7 +296,7 @@ mod tests {
     
     #[test]
     fn parse_exprs() {
-        let mut parser = Parser::new(get_tokens("1 2 3 4"));
+        let mut parser = get_parser("1 2 3 4");
         let results = parser.exprs();
 
         match results {
@@ -258,7 +311,7 @@ mod tests {
     
     #[test]
     fn parse_list_many() {
-        let mut parser = Parser::new(get_tokens("(1 2 3 4)"));
+        let mut parser = get_parser("(1 2 3 4)");
         if let Err(msg) = parser.list() {
             panic!(msg);
         } 
@@ -266,7 +319,7 @@ mod tests {
     
     #[test]
     fn parse_list1() {
-        let mut parser = Parser::new(get_tokens("( 1 )"));
+        let mut parser = get_parser("( 1 )");
         if let Err(msg) = parser.list() {
             panic!(msg);
         } 
@@ -274,7 +327,7 @@ mod tests {
     
     #[test]
     fn parse_expr_int() {
-        let mut parser = Parser::new(get_tokens("1 2 3"));
+        let mut parser = get_parser("2");
         if let Err(msg) = parser.expr() {
             panic!(msg);
         } 
@@ -282,7 +335,7 @@ mod tests {
 
     #[test]
     fn parse_expr_symbol() {
-        let mut parser = Parser::new(get_tokens("asdf"));
+        let mut parser = get_parser("asdf");
         if let Err(msg) = parser.expr() {
             panic!(msg);
         } 
@@ -290,40 +343,14 @@ mod tests {
 
     #[test]
     fn parse_lparen() {
-        let lexer = Lexer::new("( ( ( ( ) ) ) )", "test.scm");
-        let mut toks = vec!();
-        for span in lexer {
-            if let Ok(tok) = span {
-                if tok.tok == lexer::Space {
-                    continue;
-                }
-                toks.push(tok);
-            } else {
-                panic!("failed to lex a string");
-            }
-        }
-        
-        let mut parser = Parser::new(toks);
+        let mut parser = get_parser("(");
         let temp = parser.lparen();
         println!("{:?}", temp);
     }
     
     #[test]
     fn parse_int() {
-        let lexer = Lexer::new("1 2 3", "test.scm");
-        let mut toks = vec!();
-        for span in lexer {
-            if let Ok(tok) = span {
-                if tok.tok == lexer::Space {
-                    continue;
-                }
-                toks.push(tok);
-            } else {
-                panic!("failed to lex a string");
-            }
-        }
-        
-        let mut parser = Parser::new(toks);
+        let mut parser = get_parser("5");
         let temp = parser.int();
         println!("{:?}", temp);
     }

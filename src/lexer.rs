@@ -1,12 +1,4 @@
-use regex::{Regex};
-
-
-
-
-
-
-
-
+use regex::Regex;
 
 //pub type Spanned<Tok, Loc, Error> = Result<(Loc, Tok, Loc), Error>;
 #[derive(Debug, PartialEq, Clone)]
@@ -18,16 +10,51 @@ pub struct Token {
 
 impl Token {
     pub fn new(tok: Tok, start: usize, end: usize) -> Token {
-        Token{tok, start, end}
+        Token { tok, start, end }
     }
-    
-    pub fn is_float(&self) -> bool { match self.tok { Float(_) => true, _ => false, } }
-    pub fn is_int(&self) -> bool { match self.tok { Int(_) => true, _ => false, } }
-    pub fn is_symbol(&self) -> bool { match self.tok { Symbol(_) => true, _ => false, } }
-    pub fn is_lparen(&self) -> bool { match self.tok { LParen => true, _ => false, } }
-    pub fn is_rparen(&self) -> bool { match self.tok { RParen => true, _ => false, } }
-    pub fn is_dot(&self) -> bool { match self.tok { Dot => true, _ => false, } }
-    pub fn is_space(&self) -> bool { match self.tok { Space => true, _ => false, } }
+
+    pub fn is_float(&self) -> bool {
+        match self.tok {
+            Float(_) => true,
+            _ => false,
+        }
+    }
+    pub fn is_int(&self) -> bool {
+        match self.tok {
+            Int(_) => true,
+            _ => false,
+        }
+    }
+    pub fn is_symbol(&self) -> bool {
+        match self.tok {
+            Symbol(_) => true,
+            _ => false,
+        }
+    }
+    pub fn is_lparen(&self) -> bool {
+        match self.tok {
+            LParen => true,
+            _ => false,
+        }
+    }
+    pub fn is_rparen(&self) -> bool {
+        match self.tok {
+            RParen => true,
+            _ => false,
+        }
+    }
+    pub fn is_dot(&self) -> bool {
+        match self.tok {
+            Dot => true,
+            _ => false,
+        }
+    }
+    pub fn is_space(&self) -> bool {
+        match self.tok {
+            Space => true,
+            _ => false,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -48,14 +75,16 @@ pub enum LexError {}
 pub struct Lexer {
     idx: usize,
     prog: String,
-    filename: String,
+    pub filename: String,
 }
 
 impl Lexer {
     pub fn new(input: &str, filename: &str) -> Self {
-        Lexer { idx: 0,
-                prog: input.to_owned(),
-                filename: filename.to_owned() }
+        Lexer {
+            idx: 0,
+            prog: input.to_owned(),
+            filename: filename.to_owned(),
+        }
     }
 }
 
@@ -64,68 +93,68 @@ impl Iterator for Lexer {
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.idx >= self.prog.len() {
-            return None
+            return None;
         }
         let symbol_pat = Regex::new(r#"[a-zA-Z]+"#).unwrap();
         let float_pat = Regex::new(r"[-+]?[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?").unwrap();
         let int_pat = Regex::new(r"[-+]?[0-9]+").unwrap();
         let space_pat = Regex::new(r"[\s\n\t]+").unwrap();
         // symbol_pat.
-        
+
         // can we parse a symbol?
         match symbol_pat.find_at(&self.prog, self.idx) {
             Some(m) => {
-                if m.start() == self.idx { 
+                if m.start() == self.idx {
                     let tok = Tok::Symbol(String::from(m.as_str()));
                     self.idx = m.end();
-                    return Some(Ok(Token::new(tok, m.start(), m.end())))
+                    return Some(Ok(Token::new(tok, m.start(), m.end())));
                 }
-            },
-            None => {},
+            }
+            None => {}
         }
 
         // order matters! must try to parse float before int.
         match float_pat.find_at(&self.prog, self.idx) {
-            Some(m) => {                    
+            Some(m) => {
                 if m.start() == self.idx {
                     let tok = Tok::Float(m.as_str().parse::<f64>().unwrap());
                     self.idx = m.end();
-                    return Some(Ok(Token::new(tok, m.start(), m.end())))
+                    return Some(Ok(Token::new(tok, m.start(), m.end())));
                 }
-            },
-            None => {},
+            }
+            None => {}
         }
 
         // try an int
         match int_pat.find_at(&self.prog, self.idx) {
-            Some(m) => {                    
+            Some(m) => {
                 if m.start() == self.idx {
                     let tok = Tok::Int(m.as_str().parse::<i64>().unwrap());
                     self.idx = m.end();
-                    return Some(Ok(Token::new(tok, m.start(), m.end())))
+                    return Some(Ok(Token::new(tok, m.start(), m.end())));
                 }
-            },
-            None => {},
+            }
+            None => {}
         }
 
         match space_pat.find_at(&self.prog, self.idx) {
-            Some(m) => {                    
+            Some(m) => {
                 if m.start() == self.idx {
                     self.idx = m.end();
-                    return Some(Ok(Token::new(Space, m.start(), m.end())))
+                    return Some(Ok(Token::new(Space, m.start(), m.end())));
                 }
-            },
-            None => {},
+            }
+            None => {}
         }
-        
+
         if let Some(c) = self.prog.chars().nth(self.idx) {
             self.idx += 1;
             if c == ')' {
-                return Some(Ok(Token::new(Tok::RParen, self.idx-1, self.idx)));
+                return Some(Ok(Token::new(Tok::RParen, self.idx - 1, self.idx)));
             } else if c == '(' {
-                return Some(Ok(Token::new(Tok::LParen, self.idx-1, self.idx)));
+                return Some(Ok(Token::new(Tok::LParen, self.idx - 1, self.idx)));
             } else if c == '.' {
-                return Some(Ok(Token::new(Tok::Dot, self.idx-1, self.idx)));
+                return Some(Ok(Token::new(Tok::Dot, self.idx - 1, self.idx)));
             } else {
                 return None;
             }
@@ -145,8 +174,8 @@ mod tests {
         let toks: Vec<Result<Token, LexError>> = lexer.collect();
         assert_eq!(4, toks.len());
     }
-    
-    #[test]    
+
+    #[test]
     fn lex_symbol() {
         let mut lexer = Lexer::new("asdf asdf asdf asdf", "test.scm");
         if let Some(Ok(tok)) = lexer.next() {
@@ -158,7 +187,7 @@ mod tests {
         }
     }
 
-    #[test]    
+    #[test]
     fn lex_rparen() {
         let mut lexer = Lexer::new(")", "test.scm");
         if let Some(Ok(tok)) = lexer.next() {
@@ -170,13 +199,12 @@ mod tests {
         }
     }
 
-    
-    #[test]    
+    #[test]
     fn lex_float() {
         let mut lexer = Lexer::new("123.123 asdf", "test.scm");
         let float = lexer.next();
         println!("{:?}", float);
-            
+
         if let Some(Ok(tok)) = float {
             assert_eq!(tok.start, 0);
             assert_eq!(tok.tok, Float(123.123));
@@ -185,13 +213,13 @@ mod tests {
             panic!("")
         }
     }
-    
-    #[test]    
+
+    #[test]
     fn lex_int() {
         let mut lexer = Lexer::new("123", "test.scm");
         let int = lexer.next();
         println!("{:?}", int);
-        
+
         if let Some(Ok(tok)) = int {
             assert_eq!(tok.start, 0);
             assert_eq!(tok.tok, Int(123));
@@ -201,12 +229,12 @@ mod tests {
         }
     }
 
-    #[test]    
+    #[test]
     fn lex_paren() {
         let mut lexer = Lexer::new("(123", "test.scm");
         let paren = lexer.next();
         println!("{:?}", paren);
-        
+
         if let Some(Ok(tok)) = paren {
             assert_eq!(tok.start, 0);
             assert_eq!(tok.tok, Tok::LParen);
@@ -216,7 +244,7 @@ mod tests {
         }
     }
 
-    #[test]    
+    #[test]
     fn float_experiment() {
         // match "123.345 sdfgdsfg".parse::<(f64, usize)>() {
         //     Ok(num) => assert_eq!(num, (123.345, 7)),
@@ -225,12 +253,12 @@ mod tests {
 
         //let symbol_pat = Regex::new(r#"[a-zA-Z]+"#).unwrap();
         let pattern = Regex::new(r"[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?").unwrap();
-        
+
         match pattern.find_at("123.123 asdf", 0) {
             Some(m) => {
                 assert_eq!(m.as_str().parse::<f64>().unwrap(), 123.123);
-            },
-            None => {},
+            }
+            None => {}
         }
     }
 }
