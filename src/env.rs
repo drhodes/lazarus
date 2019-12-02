@@ -5,15 +5,9 @@ use std::rc::Rc;
 use crate::types::*;
 
 // ------------------------------------------------------------------
-#[derive(Debug)]
-struct Env {
-    frame: HashMap<Symb, NodeId>,
-    /// if enclosing is None, then it is the global environment.
-    enclosing: Option<Box<Env>>,
-} 
 
 impl Env {
-    fn new() -> Env {
+    pub fn new() -> Env {
         Env{frame: HashMap::new(), enclosing:None}
     }
     

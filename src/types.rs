@@ -10,7 +10,6 @@ use std::collections::HashMap;
 //     new(msg: &str, filename: String, )
 // }
 
-
 pub struct EvalErr {
     msg: String,
     filename: String,
@@ -32,12 +31,6 @@ pub struct Symb {
     pub pos: usize,
 }
 
-impl Symb {
-    pub fn new(name: &str, filename: String, pos: usize) -> Symb {
-        Symb{name: name.to_owned(), filename, pos }
-    }
-}
-
 pub struct IdNodeMap {
     table: HashMap<NodeId, Node>,
 }
@@ -48,8 +41,22 @@ impl IdNodeMap {
             table: HashMap::new(),
         }
     }
+    pub fn lookup(&mut self, id: NodeId) -> Option<&Node> {
+        self.table.get(&id)
+    }
+    pub fn lookup_mut(&mut self, id: NodeId) -> Option<&mut Node> {
+        self.table.get_mut(&id)
+    }
+    
 }
 
+
+
+impl Symb {
+    pub fn new(name: &str, filename: String, pos: usize) -> Symb {
+        Symb{name: name.to_owned(), filename, pos }
+    }
+}
 
 //pub type Spanned<Tok, Loc, Error> = Result<(Loc, Tok, Loc), Error>;
 #[derive(Debug, PartialEq, Clone)]
@@ -59,11 +66,11 @@ pub struct Token {
     pub end: usize,
 }
 
-
-#[derive(Debug)]
+// all these token types are ridiculous.
+#[derive(Debug, PartialEq)]
 pub enum Rule {
     Token(Token),
-    Int,
+    Int(i64),
     Expr,
     Exprs,
     List,
@@ -77,18 +84,6 @@ pub struct Node {
     pub nodes: Vec<Node>,
 }
 
-impl Node {
-    pub fn token(tok: Token) -> Node {
-        Node{rule: Rule::Token(tok), nodes: vec!() }
-    }
-    pub fn empty() -> Node {
-        Node{rule: Rule::Empty, nodes: vec!() }
-    }
-    pub fn new(rule: Rule, nodes: Vec<Node>) -> Node {
-        Node{rule, nodes}
-    }
-}
-
 #[derive(Debug, PartialEq, Clone)]
 pub enum Tok {
     Symbol(Symb),
@@ -99,3 +94,10 @@ pub enum Tok {
     Dot,
     Space,
 }
+
+#[derive(Debug)]
+pub struct Env {
+    pub frame: HashMap<Symb, NodeId>,
+    /// if enclosing is None, then it is the global environment.
+    pub enclosing: Option<Box<Env>>,
+} 

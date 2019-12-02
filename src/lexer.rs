@@ -51,7 +51,6 @@ impl Token {
     }
 }
 
-
 #[derive(Debug)]
 pub enum LexError {}
 
@@ -78,7 +77,7 @@ impl Iterator for Lexer {
         if self.idx >= self.prog.len() {
             return None;
         }
-        let symbol_pat = Regex::new(r#"[a-zA-Z]+"#).unwrap();
+        let symbol_pat = Regex::new(r#"[a-zA-Z\?]+"#).unwrap();
         let float_pat = Regex::new(r"[-+]?[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?").unwrap();
         let int_pat = Regex::new(r"[-+]?[0-9]+").unwrap();
         let space_pat = Regex::new(r"[\s\n\t]+").unwrap();
@@ -160,11 +159,11 @@ mod tests {
 
     #[test]
     fn lex_symbol() {
-        let mut lexer = Lexer::new("asdf asdf asdf asdf", "test.scm");
+        let mut lexer = Lexer::new("begin? asdf asdf asdf", "test.scm");
         if let Some(Ok(tok)) = lexer.next() {
             assert_eq!(tok.start, 0);
-            //assert_eq!(tok.tok, Tok::Symbol(Symb::new(}));
-            assert_eq!(tok.end, 4);
+            assert_eq!(tok.tok, Tok::Symbol(Symb::new("begin?", "test.scm".to_owned(), 0)));
+            assert_eq!(tok.end, 6);
         } else {
             panic!("")
         }
