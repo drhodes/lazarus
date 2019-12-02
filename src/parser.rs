@@ -3,7 +3,7 @@ use crate::lexer;
 use crate::types::*;
 use crate::node::*;
 
-type ParserResult = Result<Node, String>;
+type ParserResult = Result<Ast, String>;
 
 fn err(msg: &str) -> ParserResult {
     Err(msg.to_owned())
@@ -15,7 +15,7 @@ struct Parser {
     filename: String,
     toks: Vec<Token>,
     idx: usize,
-    ast: Node,
+    ast: Ast,
 }
 
 impl Parser {
@@ -34,7 +34,7 @@ impl Parser {
             }
         }
  
-        Parser{filename, toks, idx:0, ast: Node::empty()}
+        Parser{filename, toks, idx:0, ast: Ast::empty()}
     }
 
     fn next_token(&mut self) -> Option<&Token> {
@@ -77,7 +77,7 @@ impl Parser {
             self.rparen()?;        
             Ok(xs)
         })() as ParserResult {
-            Ok(xs) => Ok(Node::new(Rule::List, vec!(xs))),
+            Ok(xs) => Ok(Ast::node(Rule::List, vec!(xs))),
             Err(msg) => self.err_plus(idx, msg, "list fails"),
         }
     }
@@ -87,20 +87,20 @@ impl Parser {
         let idx = self.idx;
         
         if let Ok(n) = self.float() {
-            return Ok(Node::new(Rule::Expr, vec!(n)));
+            return Ok(Ast::node(Rule::Expr, vec!(n)));
         }
 
         if let Ok(n) = self.int() {
-            return Ok(Node::new(Rule::Expr, vec!(n)));
+            return Ok(Ast::node(Rule::Expr, vec!(n)));
         } 
 
         if let Ok(n) = self.symbol() {
-            return Ok(Node::new(Rule::Expr, vec!(n)));
+            return Ok(Ast::node(Rule::Expr, vec!(n)));
         }
 
         let result = self.list();
         match result {
-            Ok(n) => Ok(Node::new(Rule::Expr, vec!(n))),
+            Ok(n) => Ok(Ast::node(Rule::Expr, vec!(n))),
             Err(msg) => self.err_plus(idx, msg + &self.current_token_pos(), "expr fails to parse expr"),
         }
     }
@@ -115,7 +115,7 @@ impl Parser {
                 nodes.push(n); 
             } else {
                 self.idx = idx;
-                return Ok(Node::new(Rule::Exprs, nodes));
+                return Ok(Ast::node(Rule::Exprs, nodes));
             }
         }
     }
@@ -126,7 +126,7 @@ impl Parser {
         match self.next_token() {
             Some(tok) => {
                 if tok.is_lparen() {
-                    Ok(Node::token(tok.clone()))
+                    Ok(Ast::token(tok.clone()))
                 } else {
                     self.err(idx, "lparen got wrong token")
                 }
@@ -143,7 +143,7 @@ impl Parser {
         match self.next_token() {
             Some(token) => {
                 if token.is_rparen() {
-                    Ok(Node::token(token.clone()))
+                    Ok(Ast::token(token.clone()))
                 } else {
                     self.err(idx, "rparen got wrong token")
                 }
@@ -159,7 +159,7 @@ impl Parser {
         let idx = self.idx;
         if let Some(token) = self.next_token() {
             if token.is_int() {
-                Ok(Node::token(token.clone()))
+                Ok(Ast::token(token.clone()))
             } else {
                 self.err(idx, "todo int err msg")
             }
@@ -173,7 +173,7 @@ impl Parser {
         let idx = self.idx;
         if let Some(token) = self.next_token() {
             if token.is_float() {
-                Ok(Node::token(token.clone()))
+                Ok(Ast::token(token.clone()))
             } else {
                 self.err(idx, "todo float err msg")
             }
@@ -187,7 +187,7 @@ impl Parser {
         let idx = self.idx;
         if let Some(token) = self.next_token() {
             if token.is_symbol() {
-                Ok(Node::token(token.clone()))
+                Ok(Ast::token(token.clone()))
             } else {
                 self.err(idx, "todo symbol err msg")
             }

@@ -32,7 +32,7 @@ pub struct Symb {
 }
 
 pub struct IdNodeMap {
-    table: HashMap<NodeId, Node>,
+    table: HashMap<NodeId, Ast>,
 }
 
 impl IdNodeMap {
@@ -41,16 +41,13 @@ impl IdNodeMap {
             table: HashMap::new(),
         }
     }
-    pub fn lookup(&mut self, id: NodeId) -> Option<&Node> {
+    pub fn lookup(&mut self, id: NodeId) -> Option<&Ast> {
         self.table.get(&id)
     }
-    pub fn lookup_mut(&mut self, id: NodeId) -> Option<&mut Node> {
+    pub fn lookup_mut(&mut self, id: NodeId) -> Option<&mut Ast> {
         self.table.get_mut(&id)
     }
-    
 }
-
-
 
 impl Symb {
     pub fn new(name: &str, filename: String, pos: usize) -> Symb {
@@ -79,9 +76,12 @@ pub enum Rule {
 }
 
 #[derive(Debug)]
-pub struct Node {
-    pub rule: Rule,
-    pub nodes: Vec<Node>,
+pub enum Ast {
+    Node {
+        rule: Rule,
+        nodes: Vec<Ast>,
+    },
+    Leaf(Token),    
 }
 
 #[derive(Debug, PartialEq, Clone)]

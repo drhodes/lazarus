@@ -1,14 +1,14 @@
 use crate::types::*;
 
 
-impl Node {
-    pub fn token(tok: Token) -> Node {
-        Node{rule: Rule::Token(tok), nodes: vec!() }
+impl Ast {
+    pub fn token(tok: Token) -> Ast {
+        Ast::Node{rule: Rule::Token(tok), nodes: vec!() }
     }
-    pub fn empty() -> Node {
-        Node{rule: Rule::Empty, nodes: vec!() }
+    pub fn empty() -> Ast {
+        Ast::Node{rule: Rule::Empty, nodes: vec!() }
     }
-    pub fn new(rule: Rule, nodes: Vec<Node>) -> Node {
-        Node{rule, nodes}
+    pub fn node(rule: Rule, nodes: Vec<Ast>) -> Ast {
+        Ast::Node{rule, nodes}
     }
 }
