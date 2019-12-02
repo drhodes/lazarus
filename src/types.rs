@@ -22,15 +22,6 @@ impl EvalErr {
     }
 }
 
-pub type NodeId = u64;
-
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct Symb {
-    pub name: String,
-    pub filename: String,
-    pub pos: usize,
-}
-
 pub struct IdNodeMap {
     table: HashMap<NodeId, Ast>,
 }
@@ -63,11 +54,20 @@ pub struct Token {
     pub end: usize,
 }
 
-// all these token types are ridiculous.
-#[derive(Debug, PartialEq)]
-pub enum Rule {
-    Token(Token),
+#[derive(Debug, PartialEq, Clone)]
+pub enum Tok {
+    Symbol(Symb),
+    Float(f64),
     Int(i64),
+    LParen,
+    RParen,
+    Dot,
+    Space,
+}
+
+// all these token types are ridiculous.
+#[derive(Debug, PartialEq, Eq)]
+pub enum Rule {
     Expr,
     Exprs,
     List,
@@ -84,15 +84,13 @@ pub enum Ast {
     Leaf(Token),    
 }
 
-#[derive(Debug, PartialEq, Clone)]
-pub enum Tok {
-    Symbol(Symb),
-    Float(f64),
-    Int(i64),
-    LParen,
-    RParen,
-    Dot,
-    Space,
+pub type NodeId = u64;
+
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub struct Symb {
+    pub name: String,
+    pub filename: String,
+    pub pos: usize,
 }
 
 #[derive(Debug)]

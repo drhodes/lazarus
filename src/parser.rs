@@ -1,7 +1,7 @@
 use crate::lexer::*;
 use crate::lexer;
 use crate::types::*;
-use crate::node::*;
+use crate::ast::*;
 
 type ParserResult = Result<Ast, String>;
 
@@ -68,7 +68,6 @@ impl Parser {
 
     // RULES ------------------------------------------------------------------    
     fn list(&mut self) -> ParserResult {
-        println!("list");
         let idx = self.idx;
 
         match (||{
@@ -83,7 +82,7 @@ impl Parser {
     }
     
     fn expr(&mut self) -> ParserResult {
-        println!("expr");
+        //println!("expr");
         let idx = self.idx;
         
         if let Ok(n) = self.float() {
@@ -107,7 +106,7 @@ impl Parser {
 
     // this can't fail.
     fn exprs(&mut self) -> ParserResult {
-        println!("exprs");
+        //println!("exprs");
         let mut nodes = vec!();
         loop {
             let idx = self.idx;
@@ -121,12 +120,12 @@ impl Parser {
     }
     
     fn lparen(&mut self) -> ParserResult {
-        println!("lparen");
+        //println!("lparen");
         let idx = self.idx;
         match self.next_token() {
             Some(tok) => {
                 if tok.is_lparen() {
-                    Ok(Ast::token(tok.clone()))
+                    Ok(Ast::Leaf(tok.clone()))
                 } else {
                     self.err(idx, "lparen got wrong token")
                 }
@@ -138,12 +137,12 @@ impl Parser {
     }
 
     fn rparen(&mut self) -> ParserResult {
-        println!("rparen");
+        //println!("rparen");
         let idx = self.idx;
         match self.next_token() {
             Some(token) => {
                 if token.is_rparen() {
-                    Ok(Ast::token(token.clone()))
+                    Ok(Ast::Leaf(token.clone()))
                 } else {
                     self.err(idx, "rparen got wrong token")
                 }
@@ -155,11 +154,11 @@ impl Parser {
     }
     
     fn int(&mut self) -> ParserResult {
-        println!("int");
+        //println!("int");
         let idx = self.idx;
         if let Some(token) = self.next_token() {
             if token.is_int() {
-                Ok(Ast::token(token.clone()))
+                Ok(Ast::Leaf(token.clone()))
             } else {
                 self.err(idx, "todo int err msg")
             }
@@ -169,11 +168,11 @@ impl Parser {
     }
     
     fn float(&mut self) -> ParserResult {
-        println!("float");
+        //println!("float");
         let idx = self.idx;
         if let Some(token) = self.next_token() {
             if token.is_float() {
-                Ok(Ast::token(token.clone()))
+                Ok(Ast::Leaf(token.clone()))
             } else {
                 self.err(idx, "todo float err msg")
             }
@@ -183,11 +182,11 @@ impl Parser {
     }
     
     fn symbol(&mut self) -> ParserResult {
-        println!("symbol");
+        //println!("symbol");
         let idx = self.idx;
         if let Some(token) = self.next_token() {
             if token.is_symbol() {
-                Ok(Ast::token(token.clone()))
+                Ok(Ast::Leaf(token.clone()))
             } else {
                 self.err(idx, "todo symbol err msg")
             }
@@ -231,7 +230,7 @@ mod tests {
     fn parse_nested_list_2() {
         let mut parser = get_parser("(1.0 2 asdf 3 4");
         let results = parser.list();
-
+        
         match results {
             Err(msg) => { 
                 print!("{:?}", msg);
@@ -249,7 +248,7 @@ mod tests {
 
         match results {
             Ok(xs) => {
-                println!("{:?}", xs);
+                panic!("asdf");
             },
             Err(msg) => {
                 panic!(msg);
@@ -264,7 +263,12 @@ mod tests {
 
         match results {
             Ok(xs) => {
-                assert_eq!(xs.nodes.len(), 4);
+                match xs {
+                    Ast::Node{rule, nodes} => {
+                        assert_eq!(nodes.len(), 4);
+                    },
+                    _ => panic!("This should not be a leaf!"),
+                }
             },
             Err(msg) => {
                 panic!(msg);

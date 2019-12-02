@@ -9,4 +9,5 @@ mod lexer;
 //mod eval;
 mod env;
 mod types;
-mod node;
+mod ast;
+mod token;
