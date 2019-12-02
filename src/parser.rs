@@ -247,8 +247,13 @@ mod tests {
         let results = parser.list();
 
         match results {
-            Ok(xs) => {
-                panic!("asdf");
+            Ok(node) => {
+                match node {
+                    Ast::Node{rule, nodes} => {
+                        assert_eq!(rule, Rule::List);
+                    },
+                    _ => panic!("This should not be a leaf!"),
+                }
             },
             Err(msg) => {
                 panic!(msg);
