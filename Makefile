@@ -1,5 +1,4 @@
 EXE=target/debug/deps/lazarus-f41ca1e27c6e48ff
-#EXE=target/debug/war
 
 profile-perf:
 	perf record -g $(EXE)
@@ -20,6 +19,10 @@ build: ## build
 test: ## test
 	cargo test
 
+test-watch: ## test on file change
+	cargo watch -x test
+
+
 run: ## run with backtrace
 	RUST_BACKTRACE=1 cargo run
 
@@ -27,7 +30,7 @@ clean: ## clean all the things
 	bash clean.bash
 
 work: ## open all files in editor
-	emacs -nw src/*.rs Makefile
+	emacs src/*.rs Makefile
 
 # http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 .PHONY: help
