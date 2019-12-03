@@ -3,23 +3,23 @@ use crate::lexer;
 use crate::types::*;
 use crate::ast::*;
 
-type ParserResult = Result<Ast, String>;
 
-fn err(msg: &str) -> ParserResult {
-    Err(msg.to_owned())
-}
-
+pub type ParserResult = Result<Ast, String>;
 
 // ------------------------------------------------------------------
-struct Parser {
+pub struct Parser {
     filename: String,
     toks: Vec<Token>,
     idx: usize,
     ast: Ast,
 }
 
+fn err(msg: &str) -> ParserResult {
+    Err(msg.to_owned())
+}
+
 impl Parser {
-    fn new(lexer: lexer::Lexer) -> Parser {
+    pub fn new(lexer: lexer::Lexer) -> Parser {
         let mut toks = vec!();
         let filename = lexer.filename.clone();
         
@@ -67,7 +67,7 @@ impl Parser {
     }
 
     // RULES ------------------------------------------------------------------    
-    fn list(&mut self) -> ParserResult {
+    pub fn list(&mut self) -> ParserResult {
         let idx = self.idx;
 
         match (||{
@@ -81,7 +81,7 @@ impl Parser {
         }
     }
     
-    fn expr(&mut self) -> ParserResult {
+    pub fn expr(&mut self) -> ParserResult {
         //println!("expr");
         let idx = self.idx;
         

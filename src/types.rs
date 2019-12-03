@@ -10,6 +10,7 @@ use std::collections::HashMap;
 //     new(msg: &str, filename: String, )
 // }
 
+
 pub struct EvalErr {
     msg: String,
     filename: String,
@@ -65,7 +66,6 @@ pub enum Tok {
     Space,
 }
 
-// all these token types are ridiculous.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Rule {
     Expr,
@@ -80,8 +80,9 @@ pub enum Ast {
     Node {
         rule: Rule,
         nodes: Vec<Ast>,
+        id: NodeId,
     },
-    Leaf(Token),    
+    Leaf(Token),
 }
 
 pub type NodeId = u64;

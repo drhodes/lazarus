@@ -6,7 +6,7 @@
 
 mod parser;
 mod lexer;
-//mod eval;
+mod eval;
 mod env;
 mod types;
 mod ast;
