@@ -8,7 +8,7 @@ use crate::types::*;
 
 impl Env {
     pub fn new() -> Env {
-        Env{frame: HashMap::new(), enclosing:None}
+        Env{frame: Frame::new(), enclosing:None}
     }
     
     fn is_global(&self) -> bool {

@@ -58,7 +58,6 @@ pub enum Tok {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Rule {
-    //Expr,
     Exprs,
     List,
     Empty,
@@ -89,18 +88,22 @@ pub enum ObjVal {
     List(Vec<Obj>),
 }
 
-
 #[derive(Debug)]
 pub struct Obj {
     pub val: Rc<RefCell<ObjVal>>,
     pub loc: Option<Loc>, // experimental
 }
 
-
-
 #[derive(Debug)]
 pub struct Env {
-    pub frame: HashMap<Symb, Obj>,
+    pub frame: Frame,
     /// if enclosing is None, then it is the global environment.
     pub enclosing: Option<Box<Env>>,
 } 
+
+#[derive(Debug)]
+pub struct Frame {
+    pub symbol_table: HashMap<Symb, Obj>
+}
+
+
