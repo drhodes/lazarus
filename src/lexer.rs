@@ -76,8 +76,8 @@ impl Iterator for Lexer {
     fn next(&mut self) -> Option<Self::Item> {
         if self.idx >= self.prog.len() {
             return None;
-        }
-        let symbol_pat = Regex::new(r#"[a-zA-Z\?]+"#).unwrap();
+        }        
+        let symbol_pat = Regex::new(r#"[a-zA-Z][\\!a-zA-Z?]*"#).unwrap();
         let float_pat = Regex::new(r"[-+]?[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?").unwrap();
         let int_pat = Regex::new(r"[-+]?[0-9]+").unwrap();
         let space_pat = Regex::new(r"[\s\n\t]+").unwrap();
@@ -155,6 +155,29 @@ mod tests {
         let lexer = Lexer::new("(())", "test.scm");
         let toks: Vec<Result<Token, LexError>> = lexer.collect();
         assert_eq!(4, toks.len());
+    }
+    #[test]
+    fn lex_symbol_with_exclamation_as_second_char() {
+        let mut lexer = Lexer::new("s! asdf asdf asdf", "test.scm");
+        if let Some(Ok(tok)) = lexer.next() {
+            assert_eq!(tok.start, 0);
+            assert_eq!(tok.tok, Tok::Symbol(Symb::new("s!", "test.scm".to_owned(), 0)));
+            assert_eq!(tok.end, 2);
+        } else {
+            panic!("")
+        }
+    }
+
+    #[test]
+    fn lex_symbol_with_exclamation() {
+        let mut lexer = Lexer::new("set! asdf asdf asdf", "test.scm");
+        if let Some(Ok(tok)) = lexer.next() {
+            assert_eq!(tok.start, 0);
+            assert_eq!(tok.tok, Tok::Symbol(Symb::new("set!", "test.scm".to_owned(), 0)));
+            assert_eq!(tok.end, 4);
+        } else {
+            panic!("")
+        }
     }
 
     #[test]
