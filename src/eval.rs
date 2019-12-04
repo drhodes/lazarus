@@ -2,8 +2,6 @@ use crate::types::*;
 use crate::env::*;
 use std::rc::Rc;
 use std::cell::RefCell;
-// -----------------------------------------------------------------------------
-// use indirection to make more flexible.
 
 struct Eval {
     global: Env,
@@ -20,6 +18,23 @@ impl Ast {
             _ => false,
         } 
     }
+
+    fn list_items(&self) -> &Vec<Ast> {
+        if let Ast::Node{rule, nodes} = self {
+            &nodes
+        } else {
+            panic!("Can't get list items of a non list")
+        }
+    }
+    
+    fn is_pair(&self) -> bool {
+        match self {
+            Ast::Node{rule, nodes} => {
+                rule == &Rule::List && nodes.len() >= 2
+            },
+            _ => false,
+        }
+    }
     
     fn car(&self) -> Option<&Ast> {
         if self.is_list() {
@@ -33,22 +48,41 @@ impl Ast {
             panic!(format!("can't take car of: {:?}", self.name()));
         }
     }
+
+    fn first_symbol_string(&self) -> &String {
+        if let Some(Ast::Leaf(Token{tok, start, end})) = self.car() {
+            if let Tok::Symbol(sym) = tok {
+                return &sym.name
+            } else {
+                panic!("Not a symbol");
+            }
+        } else {
+            panic!("Not a symbol");
+        }
+    }
     
-    // fn is_pair
+    fn is_quoted(&self) -> bool {
+        self.first_symbol_string() == &"quote"
+        // // this is truly an abomination. to check string equality of
+        // // the first item of a node list.
+        // if let Some(Ast::Leaf(Token{tok, start, end})) = self.car() {
+        //     if let Tok::Symbol(sym) = tok {
+        //         sym.name == "quote"
+        //     } else {
+        //         false
+        //     }
+        // } else {
+        //     false
+        // }
+    }
     
-    // fn is_tagged_list(&self, tag: &str) -> bool {
-    //     let Some(node) = self.car() {
-    //         match node {
-    //             Ast::Node{rule, xs} => {
-    //                 if rule != Rule::Expr {
-    //                     panic!("")
-    //                 }
-    //             }
-    // }
+    fn is_tagged_list(&self, tag: &str) -> bool {
+        self.first_symbol_string() == tag
+    }
     
-    // fn is_assignment(&self) -> bool {
-    //     self.is_tagged_list(&self, "set!")
-    // }
+    fn is_assignment(&self) -> bool {
+        self.is_tagged_list("set!")
+    }
 }
 
 impl Eval {
@@ -94,9 +128,23 @@ mod tests {
         Parser::new(lexer)
     }
 
-    
     #[test]
     // this test should fail because the list doesn't have a close paren.
+    fn eval_number_set() {
+        let mut parser = get_parser("(set! foo 42)");
+        let results = parser.list();
+        
+        match results {
+            Err(msg) => {
+                panic!(msg)
+            },
+            Ok(node) => {
+                assert!(node.is_assignment());
+            }
+        } 
+    }
+    
+    #[test]
     fn eval_number_1() {
         let mut parser = get_parser("1");
         let results = parser.expr();
