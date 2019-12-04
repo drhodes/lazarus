@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 // struct ParserError {
 //     reasons: Vec<String>,
@@ -9,7 +11,6 @@ use std::collections::HashMap;
 // impl ParserError {
 //     new(msg: &str, filename: String, )
 // }
-
 
 pub struct EvalErr {
     msg: String,
@@ -23,28 +24,17 @@ impl EvalErr {
     }
 }
 
-pub struct IdNodeMap {
-    table: HashMap<NodeId, Ast>,
-}
-
-impl IdNodeMap {
-    pub fn new() -> IdNodeMap {
-        IdNodeMap {
-            table: HashMap::new(),
-        }
-    }
-    pub fn lookup(&mut self, id: NodeId) -> Option<&Ast> {
-        self.table.get(&id)
-    }
-    pub fn lookup_mut(&mut self, id: NodeId) -> Option<&mut Ast> {
-        self.table.get_mut(&id)
-    }
-}
-
 impl Symb {
     pub fn new(name: &str, filename: String, pos: usize) -> Symb {
         Symb{name: name.to_owned(), filename, pos }
     }
+}
+
+#[derive(Debug)]
+pub struct Loc {
+    pub filename: String,
+    pub start: usize,
+    pub end: usize,
 }
 
 //pub type Spanned<Tok, Loc, Error> = Result<(Loc, Tok, Loc), Error>;
@@ -68,7 +58,7 @@ pub enum Tok {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Rule {
-    Expr,
+    //Expr,
     Exprs,
     List,
     Empty,
@@ -80,12 +70,9 @@ pub enum Ast {
     Node {
         rule: Rule,
         nodes: Vec<Ast>,
-        id: NodeId,
     },
     Leaf(Token),
 }
-
-pub type NodeId = u64;
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct Symb {
@@ -95,8 +82,25 @@ pub struct Symb {
 }
 
 #[derive(Debug)]
+pub enum ObjVal {
+    Symbol(String),
+    Float(f64),
+    Int(u64),
+    List(Vec<Obj>),
+}
+
+
+#[derive(Debug)]
+pub struct Obj {
+    pub val: Rc<RefCell<ObjVal>>,
+    pub loc: Option<Loc>, // experimental
+}
+
+
+
+#[derive(Debug)]
 pub struct Env {
-    pub frame: HashMap<Symb, NodeId>,
+    pub frame: HashMap<Symb, Obj>,
     /// if enclosing is None, then it is the global environment.
     pub enclosing: Option<Box<Env>>,
 } 

@@ -1,14 +1,13 @@
 use crate::types::*;
 use crate::env::*;
-
+use std::rc::Rc;
+use std::cell::RefCell;
 // -----------------------------------------------------------------------------
 // use indirection to make more flexible.
 
 struct Eval {
-    node_map: IdNodeMap,
     global: Env,
 }
-
 
 impl Ast {
     pub fn is_variable(&self) -> bool {
@@ -21,31 +20,49 @@ impl Ast {
             _ => false,
         } 
     }
+    
+    fn car(&self) -> Option<&Ast> {
+        if self.is_list() {
+            match self {
+                Ast::Node{rule, nodes} => {
+                    nodes.get(0)
+                },
+                _ => panic!("impossible.")
+            }             
+        } else {
+            panic!(format!("can't take car of: {:?}", self.name()));
+        }
+    }
+    
+    // fn is_pair
+    
+    // fn is_tagged_list(&self, tag: &str) -> bool {
+    //     let Some(node) = self.car() {
+    //         match node {
+    //             Ast::Node{rule, xs} => {
+    //                 if rule != Rule::Expr {
+    //                     panic!("")
+    //                 }
+    //             }
+    // }
+    
+    // fn is_assignment(&self) -> bool {
+    //     self.is_tagged_list(&self, "set!")
+    // }
 }
-   
-
 
 impl Eval {
     fn new() -> Eval {
-        Eval{ node_map: IdNodeMap::new(),
-              global: Env::new() }
+        Eval{
+            global: Env::new(), //Rc::new(RefCell::new(Env::new())),
+        }
     }
     
-    // fn lookup(&self, var: &Symb, env: Env) -> Result<&mut Ast, String> {
-    //     match env.frame.get(var) {
-    //         Some(id) => match self.node_map.lookup_mut(*id) {
-    //             Some(node) => Ok(node),
-    //             None => Err("Internal error, id not found".to_owned()),
-    //         }
-    //         None => Err(format!("undefined var: {}", var.name))
-    //     } 
-    // }
-
     fn is_self_evaluating(&self, exp: &Ast) -> bool {
         exp.is_self_evaluating()
     }
-
-
+    
+    
     // fn is_quoted(&self, exp: &Ast) {
     //     ( self.is_list(exp) &&
     //       exp.nodes.len() > 0 &&

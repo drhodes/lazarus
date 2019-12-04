@@ -2,7 +2,7 @@ use crate::lexer::*;
 use crate::lexer;
 use crate::types::*;
 use crate::ast::*;
-
+use std::ops;
 
 pub type ParserResult = Result<Ast, String>;
 
@@ -65,7 +65,7 @@ impl Parser {
             self.filename.clone() +  ": " + &pos
         }
     }
-
+    
     // RULES ------------------------------------------------------------------    
     pub fn list(&mut self) -> ParserResult {
         let idx = self.idx;
@@ -76,7 +76,14 @@ impl Parser {
             self.rparen()?;        
             Ok(xs)
         })() as ParserResult {
-            Ok(xs) => Ok(Ast::node(Rule::List, vec!(xs))),
+            Ok(mut xs) => {
+                // xs is has rule type Exprs, which is zero-or-more
+                // expressions, but this is a List production, but
+                // that that makes the AST more cumbersome, so flatten
+                // it.
+                xs.replace_rule(Rule::List);
+                return Ok(xs);
+            }
             Err(msg) => self.err_plus(idx, msg, "list fails"),
         }
     }
@@ -84,22 +91,23 @@ impl Parser {
     pub fn expr(&mut self) -> ParserResult {
         //println!("expr");
         let idx = self.idx;
-        
+
+        // this is boiler plate.
         if let Ok(n) = self.float() {
-            return Ok(Ast::node(Rule::Expr, vec!(n)));
+            return Ok(n);
         }
-
         if let Ok(n) = self.int() {
-            return Ok(Ast::node(Rule::Expr, vec!(n)));
+            return Ok(n);
         } 
-
         if let Ok(n) = self.symbol() {
-            return Ok(Ast::node(Rule::Expr, vec!(n)));
+            return Ok(n);
         }
 
         let result = self.list();
+        // TODO perhaps use a vector of error strings to trace the
+        // errors instead of using string append.
         match result {
-            Ok(n) => Ok(Ast::node(Rule::Expr, vec!(n))),
+            Ok(n) => Ok(n),
             Err(msg) => self.err_plus(idx, msg + &self.current_token_pos(), "expr fails to parse expr"),
         }
     }
@@ -233,7 +241,7 @@ mod tests {
         
         match results {
             Err(msg) => { 
-                print!("{:?}", msg);
+                //panic!("this was supposed to fail,");
             },
             Ok(xs) => {
                 panic!("this was supposed to fail");
@@ -248,9 +256,11 @@ mod tests {
 
         match results {
             Ok(node) => {
-                match node {
+                match &node {
                     Ast::Node{rule, nodes} => {
-                        assert_eq!(rule, Rule::List);
+                        println!("{:?}", node);
+                        node.pretty();
+                        assert_eq!(rule, &Rule::List);
                     },
                     _ => panic!("This should not be a leaf!"),
                 }

@@ -1,29 +1,35 @@
 use crate::types::*;
 use std::cell::Cell;
 
-const __GLOBAL_NONCE: Cell<u64> = Cell::new(0);
-
-fn next_id() -> u64 {
-    // increment nonce
-    let nonce = __GLOBAL_NONCE.get();
-    __GLOBAL_NONCE.set(nonce+1);
-    return nonce + 1
-}
-
-
 impl Ast {
     // constructors
     pub fn leaf(tok: Token) -> Ast {
         Ast::Leaf(tok)
     }
     pub fn empty() -> Ast {
-        Ast::Node{rule: Rule::Empty, nodes: vec!(), id:next_id() }
+        Ast::Node{rule: Rule::Empty, nodes: vec!()}
     }
     pub fn node(rule: Rule, nodes: Vec<Ast>) -> Ast {
-        Ast::Node{rule, nodes, id:next_id()}
+        Ast::Node{rule, nodes}
     }
     
     // ------------------------------------------------------------------
+    pub fn replace_rule(&mut self, new_rule: Rule) {
+        match self {
+            Ast::Leaf(..) => panic!("this method may not be called on leaf"),
+            Ast::Node{rule, ..} => {
+                *rule = new_rule
+            },
+        }
+    }
+
+    pub fn name(&self) -> String {
+        match &self {
+            Ast::Leaf(..) => "Token".to_owned(),
+            Ast::Node{rule, ..} => format!("rule: {:?}", rule),
+        }
+    }
+    
     pub fn is_self_evaluating(&self) -> bool {
         match &self {
             Ast::Leaf(leaf) => {
@@ -33,7 +39,7 @@ impl Ast {
                     _ => false,
                 }
             },
-            Ast::Node{rule, nodes, id} => {
+            Ast::Node{rule, nodes} => {
                 match rule {
                     // what is the role of Empty here?
                     // maybe Ast should have another 
@@ -63,10 +69,11 @@ impl Ast {
             &Ast::Leaf(tok) => {
                 tok.pretty();
             },
-            &Ast::Node{rule, nodes, id} => {
+            &Ast::Node{rule, nodes} => {
                 match rule {
-                    Rule::Expr => nodes[0].pretty(),
-                    Rule::Exprs => {
+                    //Rule::Expr => nodes[0].pretty(),
+                    Rule::List => {
+                        print!("(");
                         let mut limit = nodes.len();
                         for node in nodes.iter() {
                             node.pretty();
@@ -75,16 +82,13 @@ impl Ast {
                             }
                             limit -= 1;
                         }
-                    },
-                    Rule::List => {
-                        print!("(");
-                        nodes[0].pretty();
                         print!(")");
                     },
                     Rule::Empty => {},
                     Rule::EmptyList => {
                         print!("()");
-                    }
+                    },
+                    Rule::Exprs => panic!("Exprs rule should not make it into AST"),
                 }
             }
         }
