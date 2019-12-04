@@ -19,6 +19,7 @@ build: ## build
 test: ## test
 	cargo test
 
+test-watch: export RUST_BACKTRACE = 1
 test-watch: ## test on file change
 	cargo watch -x test
 
@@ -30,7 +31,7 @@ clean: ## clean all the things
 	bash clean.bash
 
 work: ## open all files in editor
-	emacs src/*.rs Makefile
+	emacs -nw src/*.rs Makefile
 
 # http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 .PHONY: help
