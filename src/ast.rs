@@ -51,6 +51,21 @@ impl Ast {
         }
     }        
 
+    pub fn to_obj(&self) -> Obj {
+        match &self {
+            Ast::Leaf(leaf) => {
+                leaf.to_obj()
+            },
+            Ast::Node{rule, nodes} => {
+                let mut objs = vec!();
+                for node in nodes {
+                    objs.push(node.to_obj())
+                }
+                Obj::new_list(objs, None)
+            }
+        }
+    }
+    
     pub fn is_symbol(&self) -> bool {
         match &self {
             Ast::Leaf(token) => {

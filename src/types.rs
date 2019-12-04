@@ -37,6 +37,12 @@ pub struct Loc {
     pub end: usize,
 }
 
+impl Loc {
+    pub fn new(filename: String, start: usize, end: usize) -> Loc {
+        Loc{filename, start, end}
+    }
+}
+
 //pub type Spanned<Tok, Loc, Error> = Result<(Loc, Tok, Loc), Error>;
 #[derive(Debug, PartialEq, Clone)]
 pub struct Token {
@@ -84,7 +90,7 @@ pub struct Symb {
 pub enum ObjVal {
     Symbol(String),
     Float(f64),
-    Int(u64),
+    Int(i64),
     List(Vec<Obj>),
 }
 

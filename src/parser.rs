@@ -235,6 +235,24 @@ mod tests {
 
     #[test]
     // this test should fail because the list doesn't have a close paren.
+    fn parse_to_obj_1() {
+        let mut parser = get_parser("(1 2 (3))");
+        let results = parser.list();        
+        
+        match results {
+            Err(msg) => {
+                panic!(msg)
+            },
+            Ok(xs) => {
+                let obj = xs.to_obj();
+                assert!(obj.is_list());
+            },
+        } 
+    }
+
+    
+    #[test]
+    // this test should fail because the list doesn't have a close paren.
     fn parse_nested_list_2() {
         let mut parser = get_parser("(1.0 2 asdf 3 4");
         let results = parser.list();
