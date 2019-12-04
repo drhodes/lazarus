@@ -30,7 +30,7 @@ impl Symb {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Loc {
     pub filename: String,
     pub start: usize,
@@ -80,7 +80,7 @@ pub struct Symb {
     pub pos: usize,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ObjVal {
     Symbol(String),
     Float(f64),
@@ -88,7 +88,7 @@ pub enum ObjVal {
     List(Vec<Obj>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Obj {
     pub val: Rc<RefCell<ObjVal>>,
     pub loc: Option<Loc>, // experimental
