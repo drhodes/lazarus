@@ -26,6 +26,21 @@ impl Obj {
         Obj::new(ObjVal::Symbol(name), loc)
     }
 
+    // the Symb type exists and Obj::Symbol exists.
+    // Symb is convenient.
+    // Obj::Symbol can be stored on the heap.
+    // Does Symb need to be ...?
+
+    // for now, just get this working.
+    // it will become evident what to do as the system grows.
+    pub fn to_symb(&self) -> EvalResult<Symb> {
+        if let ObjVal::Symbol(sym) = &*self.val.borrow() {
+            Ok(Symb::new(&sym.clone(), "".to_owned(), 0))
+        } else {
+            Err("Not a symbol!".to_string())
+        }
+    }
+
     pub fn is_list(&self) -> bool {
         if let ObjVal::List(..) = *self.val.borrow() {
             return true;
