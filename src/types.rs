@@ -1,16 +1,6 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
-use std::cell::RefCell;
-
-// struct ParserError {
-//     reasons: Vec<String>,
-//     filename: String,
-//     pos: usize, // this will be line, column
-// }
-
-// impl ParserError {
-//     new(msg: &str, filename: String, )
-// }
 
 pub struct EvalErr {
     msg: String,
@@ -20,13 +10,21 @@ pub struct EvalErr {
 
 impl EvalErr {
     pub fn new(msg: &str, filename: String, pos: usize) -> EvalErr {
-        EvalErr{msg:msg.to_owned(), filename, pos}
+        EvalErr {
+            msg: msg.to_owned(),
+            filename,
+            pos,
+        }
     }
 }
 
 impl Symb {
     pub fn new(name: &str, filename: String, pos: usize) -> Symb {
-        Symb{name: name.to_owned(), filename, pos }
+        Symb {
+            name: name.to_owned(),
+            filename,
+            pos,
+        }
     }
 }
 
@@ -39,11 +37,14 @@ pub struct Loc {
 
 impl Loc {
     pub fn new(filename: String, start: usize, end: usize) -> Loc {
-        Loc{filename, start, end}
+        Loc {
+            filename,
+            start,
+            end,
+        }
     }
 }
 
-//pub type Spanned<Tok, Loc, Error> = Result<(Loc, Tok, Loc), Error>;
 #[derive(Debug, PartialEq, Clone)]
 pub struct Token {
     pub tok: Tok,
@@ -72,10 +73,7 @@ pub enum Rule {
 
 #[derive(Debug)]
 pub enum Ast {
-    Node {
-        rule: Rule,
-        nodes: Vec<Ast>,
-    },
+    Node { rule: Rule, nodes: Vec<Ast> },
     Leaf(Token),
 }
 
@@ -105,11 +103,11 @@ pub struct Env {
     pub frame: Frame,
     /// if enclosing is None, then it is the global environment.
     pub enclosing: Option<Box<Env>>,
-} 
+}
 
 #[derive(Debug)]
 pub struct Frame {
-    pub symbol_table: HashMap<Symb, Obj>
+    pub symbol_table: HashMap<Symb, Obj>,
 }
 
-
+pub type EvalResult<T> = Result<T, String>;

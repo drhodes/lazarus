@@ -4,12 +4,12 @@
 #![allow(unused_variables)]
 #![feature(box_patterns)]
 
-mod parser;
-mod lexer;
-mod eval;
-mod env;
-mod types;
 mod ast;
-mod token;
-mod obj;
+mod env;
+mod eval;
 mod frame;
+mod lexer;
+mod obj;
+mod parser;
+mod token;
+mod types;
