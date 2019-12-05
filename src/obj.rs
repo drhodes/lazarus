@@ -58,6 +58,10 @@ impl Obj {
         }
     }
 
+    pub fn is_variable(&self) -> bool {
+        self.is_symbol()
+    }
+
     pub fn is_self_evaluating(&self) -> bool {
         return self.is_float() || self.is_int();
     }

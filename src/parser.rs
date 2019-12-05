@@ -1,7 +1,7 @@
-use crate::lexer::*;
-use crate::lexer;
-use crate::types::*;
 use crate::ast::*;
+use crate::lexer;
+use crate::lexer::*;
+use crate::types::*;
 use std::ops;
 
 pub type ParserResult = Result<Ast, String>;
@@ -20,9 +20,9 @@ fn err(msg: &str) -> ParserResult {
 
 impl Parser {
     pub fn new(lexer: lexer::Lexer) -> Parser {
-        let mut toks = vec!();
+        let mut toks = vec![];
         let filename = lexer.filename.clone();
-        
+
         for span in lexer {
             if let Ok(token) = span {
                 if token.tok == Tok::Space {
@@ -33,8 +33,13 @@ impl Parser {
                 panic!("failed to lex a string");
             }
         }
- 
-        Parser{filename, toks, idx:0, ast: Ast::empty()}
+
+        Parser {
+            filename,
+            toks,
+            idx: 0,
+            ast: Ast::empty(),
+        }
     }
 
     fn next_token(&mut self) -> Option<&Token> {
@@ -51,7 +56,7 @@ impl Parser {
         self.idx = cursor;
         err(msg)
     }
-    
+
     fn err_plus(&mut self, cursor: usize, msg1: String, msg2: &str) -> ParserResult {
         self.idx = cursor;
         Err(msg1 + "\n " + &self.current_token_pos() + msg2)
@@ -59,23 +64,24 @@ impl Parser {
 
     fn current_token_pos(&self) -> String {
         if self.toks.len() == 0 {
-            self.filename.clone() +  ": end of file"
+            self.filename.clone() + ": end of file"
         } else {
             let pos = format!("char: {}", self.toks[0].start).to_owned();
-            self.filename.clone() +  ": " + &pos
+            self.filename.clone() + ": " + &pos
         }
     }
-    
-    // RULES ------------------------------------------------------------------    
+
+    // RULES ------------------------------------------------------------------
     pub fn list(&mut self) -> ParserResult {
         let idx = self.idx;
 
-        match (||{
-            self.lparen()?;      
+        match (|| {
+            self.lparen()?;
             let xs = self.exprs()?;
-            self.rparen()?;        
+            self.rparen()?;
             Ok(xs)
-        })() as ParserResult {
+        })() as ParserResult
+        {
             Ok(mut xs) => {
                 // xs is has rule type Exprs, which is zero-or-more
                 // expressions, but this is a List production, but
@@ -87,7 +93,7 @@ impl Parser {
             Err(msg) => self.err_plus(idx, msg, "list fails"),
         }
     }
-    
+
     pub fn expr(&mut self) -> ParserResult {
         //println!("expr");
         let idx = self.idx;
@@ -98,7 +104,7 @@ impl Parser {
         }
         if let Ok(n) = self.int() {
             return Ok(n);
-        } 
+        }
         if let Ok(n) = self.symbol() {
             return Ok(n);
         }
@@ -108,25 +114,29 @@ impl Parser {
         // errors instead of using string append.
         match result {
             Ok(n) => Ok(n),
-            Err(msg) => self.err_plus(idx, msg + &self.current_token_pos(), "expr fails to parse expr"),
+            Err(msg) => self.err_plus(
+                idx,
+                msg + &self.current_token_pos(),
+                "expr fails to parse expr",
+            ),
         }
     }
 
     // this can't fail.
     fn exprs(&mut self) -> ParserResult {
         //println!("exprs");
-        let mut nodes = vec!();
+        let mut nodes = vec![];
         loop {
             let idx = self.idx;
             if let Ok(n) = self.expr() {
-                nodes.push(n); 
+                nodes.push(n);
             } else {
                 self.idx = idx;
                 return Ok(Ast::node(Rule::Exprs, nodes));
             }
         }
     }
-    
+
     fn lparen(&mut self) -> ParserResult {
         //println!("lparen");
         let idx = self.idx;
@@ -138,9 +148,7 @@ impl Parser {
                     self.err(idx, "lparen got wrong token")
                 }
             }
-            None => {
-                self.err(idx, "done")
-            }
+            None => self.err(idx, "done"),
         }
     }
 
@@ -155,12 +163,10 @@ impl Parser {
                     self.err(idx, "rparen got wrong token")
                 }
             }
-            None => {
-                self.err(idx, "done")
-            }
+            None => self.err(idx, "done"),
         }
     }
-    
+
     fn int(&mut self) -> ParserResult {
         //println!("int");
         let idx = self.idx;
@@ -174,7 +180,7 @@ impl Parser {
             self.err(idx, "todo int err msg 2")
         }
     }
-    
+
     fn float(&mut self) -> ParserResult {
         //println!("float");
         let idx = self.idx;
@@ -188,7 +194,7 @@ impl Parser {
             self.err(idx, "todo float err msg 2")
         }
     }
-    
+
     fn symbol(&mut self) -> ParserResult {
         //println!("symbol");
         let idx = self.idx;
@@ -207,14 +213,13 @@ impl Parser {
 // ------------------------------------------------------------------
 // TESTS.
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     fn get_tokens(s: &str) -> Vec<Token> {
         let lexer = Lexer::new(s, "test.scm");
-        let mut toks = vec!();
+        let mut toks = vec![];
         for span in lexer {
             if let Ok(token) = span {
                 if token.tok == Tok::Space {
@@ -237,100 +242,93 @@ mod tests {
     // this test should fail because the list doesn't have a close paren.
     fn parse_to_obj_1() {
         let mut parser = get_parser("(1 2 (3))");
-        let results = parser.list();        
-        
+        let results = parser.list();
+
         match results {
-            Err(msg) => {
-                panic!(msg)
-            },
+            Err(msg) => panic!(msg),
             Ok(xs) => {
                 let obj = xs.to_obj();
                 assert!(obj.is_list());
-            },
-        } 
+            }
+        }
     }
 
-    
     #[test]
     // this test should fail because the list doesn't have a close paren.
     fn parse_nested_list_2() {
         let mut parser = get_parser("(1.0 2 asdf 3 4");
         let results = parser.list();
-        
+
         match results {
-            Err(msg) => { 
+            Err(msg) => {
                 //panic!("this was supposed to fail,");
-            },
+            }
             Ok(xs) => {
                 panic!("this was supposed to fail");
-            },
-        } 
+            }
+        }
     }
-    
+
     #[test]
     fn parse_nested_list() {
         let mut parser = get_parser("(1 2.0 three 4 (5 6))");
         let results = parser.list();
 
         match results {
-            Ok(node) => {
-                match &node {
-                    Ast::Node{rule, nodes} => {
-                        println!("{:?}", node);
-                        node.pretty();
-                        assert_eq!(rule, &Rule::List);
-                    },
-                    _ => panic!("This should not be a leaf!"),
+            Ok(node) => match &node {
+                Ast::Node { rule, nodes } => {
+                    println!("{:?}", node);
+                    node.pretty();
+                    assert_eq!(rule, &Rule::List);
                 }
+                _ => panic!("This should not be a leaf!"),
             },
             Err(msg) => {
                 panic!(msg);
             }
-        } 
+        }
     }
-    
+
     #[test]
     fn parse_exprs() {
         let mut parser = get_parser("1 2 3 4");
         let results = parser.exprs();
 
         match results {
-            Ok(xs) => {
-                match xs {
-                    Ast::Node{rule, nodes} => {
-                        assert_eq!(nodes.len(), 4);
-                    },
-                    _ => panic!("This should not be a leaf!"),
+            Ok(xs) => match xs {
+                Ast::Node { rule, nodes } => {
+                    assert_eq!(nodes.len(), 4);
                 }
+                _ => panic!("This should not be a leaf!"),
             },
             Err(msg) => {
                 panic!(msg);
             }
-        } 
+        }
     }
-    
+
     #[test]
     fn parse_list_many() {
         let mut parser = get_parser("(1 2 3 4)");
         if let Err(msg) = parser.list() {
             panic!(msg);
-        } 
+        }
     }
-    
+
     #[test]
     fn parse_list1() {
         let mut parser = get_parser("( 1 )");
         if let Err(msg) = parser.list() {
             panic!(msg);
-        } 
+        }
     }
-    
+
     #[test]
     fn parse_expr_int() {
         let mut parser = get_parser("2");
         if let Err(msg) = parser.expr() {
             panic!(msg);
-        } 
+        }
     }
 
     #[test]
@@ -338,7 +336,7 @@ mod tests {
         let mut parser = get_parser("asdf");
         if let Err(msg) = parser.expr() {
             panic!(msg);
-        } 
+        }
     }
 
     #[test]
@@ -347,7 +345,7 @@ mod tests {
         let temp = parser.lparen();
         println!("{:?}", temp);
     }
-    
+
     #[test]
     fn parse_int() {
         let mut parser = get_parser("5");

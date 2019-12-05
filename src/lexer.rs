@@ -1,6 +1,5 @@
-use regex::Regex;
 use crate::types::*;
-
+use regex::Regex;
 
 impl Token {
     pub fn new(tok: Tok, start: usize, end: usize) -> Token {
@@ -76,7 +75,7 @@ impl Iterator for Lexer {
     fn next(&mut self) -> Option<Self::Item> {
         if self.idx >= self.prog.len() {
             return None;
-        }        
+        }
         let symbol_pat = Regex::new(r#"[a-zA-Z][\\!a-zA-Z?]*"#).unwrap();
         let float_pat = Regex::new(r"[-+]?[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?").unwrap();
         let int_pat = Regex::new(r"[-+]?[0-9]+").unwrap();
@@ -161,7 +160,10 @@ mod tests {
         let mut lexer = Lexer::new("s! asdf asdf asdf", "test.scm");
         if let Some(Ok(tok)) = lexer.next() {
             assert_eq!(tok.start, 0);
-            assert_eq!(tok.tok, Tok::Symbol(Symb::new("s!", "test.scm".to_owned(), 0)));
+            assert_eq!(
+                tok.tok,
+                Tok::Symbol(Symb::new("s!", "test.scm".to_owned(), 0))
+            );
             assert_eq!(tok.end, 2);
         } else {
             panic!("")
@@ -173,7 +175,10 @@ mod tests {
         let mut lexer = Lexer::new("set! asdf asdf asdf", "test.scm");
         if let Some(Ok(tok)) = lexer.next() {
             assert_eq!(tok.start, 0);
-            assert_eq!(tok.tok, Tok::Symbol(Symb::new("set!", "test.scm".to_owned(), 0)));
+            assert_eq!(
+                tok.tok,
+                Tok::Symbol(Symb::new("set!", "test.scm".to_owned(), 0))
+            );
             assert_eq!(tok.end, 4);
         } else {
             panic!("")
@@ -185,7 +190,10 @@ mod tests {
         let mut lexer = Lexer::new("begin? asdf asdf asdf", "test.scm");
         if let Some(Ok(tok)) = lexer.next() {
             assert_eq!(tok.start, 0);
-            assert_eq!(tok.tok, Tok::Symbol(Symb::new("begin?", "test.scm".to_owned(), 0)));
+            assert_eq!(
+                tok.tok,
+                Tok::Symbol(Symb::new("begin?", "test.scm".to_owned(), 0))
+            );
             assert_eq!(tok.end, 6);
         } else {
             panic!("")
@@ -251,12 +259,6 @@ mod tests {
 
     #[test]
     fn float_experiment() {
-        // match "123.345 sdfgdsfg".parse::<(f64, usize)>() {
-        //     Ok(num) => assert_eq!(num, (123.345, 7)),
-        //     Err(_) => panic!("parse fails"),
-        // }
-
-        //let symbol_pat = Regex::new(r#"[a-zA-Z]+"#).unwrap();
         let pattern = Regex::new(r"[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?").unwrap();
 
         match pattern.find_at("123.123 asdf", 0) {
