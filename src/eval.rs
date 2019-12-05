@@ -7,6 +7,11 @@ struct Eval {
     global: Env,
 }
 
+fn eval(exp: Obj, env: Env) -> EvalResult<Obj> {
+    if exp.is_self_evaluating() {
+        Ok(exp)
+    } else {
+        Err(format!("no eval rule for: {:?}", exp))
     }
 }
 
