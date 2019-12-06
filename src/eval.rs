@@ -3,6 +3,10 @@ use crate::types::*;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+fn unimplemented<T>() -> EvalResult<T> {
+    Err("unimplemented".to_string())
+}
+
 fn eval_assignment(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     let var = exp.assignment_variable()?;
     let val = exp.assignment_value()?;
@@ -10,6 +14,14 @@ fn eval_assignment(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     // departs from sicp to appease type system.
     Ok(val.clone())
 }
+
+fn eval_definition(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
+    let var = exp.definition_variable()?.to_symb()?;
+    let val = eval(exp.definition_value()?, env)?;
+    env.define_variable(&var, val.clone());
+    Ok(val.clone())
+}
+
 
 fn eval(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     // self-evaluating? 
@@ -36,6 +48,10 @@ fn eval(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
         eval_assignment(exp, env)
     }
 
+    // definition?
+    else if exp.is_definition() {
+        eval_definition(exp, env)
+    }
     
     // uh oh ---------------------------------------------------------------------------------------
     else {
@@ -55,6 +71,19 @@ mod tests {
     fn get_parser(s: &str) -> Parser {
         let lexer = Lexer::new(s, "test.scm");
         Parser::new(lexer)
+    }
+    #[test]
+    fn eval_definition_1() {
+        let mut env = Env::new();
+        let sym = Symb::new("foo", "test-eval.rs".to_owned(), 0);
+        let mut parser = get_parser("(define foo 42)");
+        let parse_results = parser.list().unwrap();
+        let obj = parse_results.to_obj();
+        let result = eval(obj, &mut env);
+        println!("{:?}", env);
+        let val = &env.lookup_variable_value(&sym).unwrap();
+        assert_eq!(val, &Obj::new_int(42, None));
+        assert_ne!(val, &Obj::new_int(43, None));        
     }
 
     #[test]

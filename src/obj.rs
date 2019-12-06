@@ -145,6 +145,14 @@ impl Obj {
         self.cdr()?.cdr()?.car()
     }
     
+    pub fn cddr(&self) -> EvalResult<Obj> {
+        self.cdr()?.cdr()
+    }
+
+    pub fn cdadr(&self) -> EvalResult<Obj> {
+        self.cdr()?.car()?.cdr()
+    }
+    
     pub fn string_matches(&self, s: &str) -> bool {
         if let ObjVal::Symbol(sym) = &*self.val.borrow() {
             s == sym
@@ -190,31 +198,28 @@ impl Obj {
     /// | (define ⟨var⟩ (lambda (⟨param₁⟩ … ⟨paramₙ⟩) ⟨body⟩))
 
     pub fn definition_variable(&self) -> EvalResult<Obj> {
-        let items = self.list_items()?;
-        if items[1].is_symbol() {
-            Ok(items[1].clone())
+        if self.cadr()?.is_symbol() {
+            self.cadr()
         } else {
-            Ok(items[2].clone())
+            self.caddr()
         }
     }
-
-    // TODO fn make_lambda
-
-    // pub fn definition_value(&self) -> EvalResult<Obj> {
-    //     let items = self.list_items()?;
-
-    //     // (if (symbol? (cadr exp))
-    //     if items[1].is_symbol() {
-    //         //     (caddr exp)
-    //         Ok(items[2].clone())
-    //     } else {
-    //         //     (make-lambda
-    //         //      (cdadr exp)   ; formal parameters
-    //         //      (cddr exp)))) ; body
-    //         Ok(items[2].clone())
-    //         //Obj::make_lambda()
-    //     }
-    // }
+    
+    
+    
+    fn make_lambda(params: Obj, body: Obj) -> Obj {
+        Obj::new_list(vec!( Obj::new_symb("lambda".to_string(), None),
+                            params,
+                            body ), None)
+    }
+    
+    pub fn definition_value(&self) -> EvalResult<Obj> {
+        if self.cadr()?.is_symbol() {
+            self.caddr()
+        } else {
+            Ok(Obj::make_lambda(self.cdadr()?, self.cddr()?))
+        }
+    }
 }
 
 #[cfg(test)]
