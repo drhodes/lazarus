@@ -137,3 +137,7 @@ pub struct Frame {
 }
 
 pub type EvalResult<T> = Result<T, String>;
+
+fn unimplemented<T>() -> EvalResult<T> {
+    Err("unimplemented".to_string())
+}

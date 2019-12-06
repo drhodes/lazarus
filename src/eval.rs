@@ -3,10 +3,6 @@ use crate::types::*;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-fn unimplemented<T>() -> EvalResult<T> {
-    Err("unimplemented".to_string())
-}
-
 fn eval_assignment(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     let var = exp.assignment_variable()?;
     let val = exp.assignment_value()?;
@@ -43,20 +39,12 @@ fn make_procedure(parameters: Obj, body: Obj, env: &mut Env) -> Obj {
     )
 }
 
-// fn sequence_to_exp(seq: Obj) -> EvalResult<Obj> {
-//     if (seq.is_null()?.is_true()) {
-//         seq
-//     } else if seq.is_last_expr() {
-        
-//     }
-// }
-
 fn eval_sequence(xs: Obj, env: &mut Env) -> EvalResult<Obj> {
     if xs.is_last_expr()? {
         eval(xs.car()?, env)
     } else {
         eval(xs.car()?, env)?;
-        eval_sequence(xs.rest_expr()?, env)        
+        eval_sequence(xs.rest_expr()?, env)
     }
 }
 
@@ -91,13 +79,16 @@ fn eval(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     }
     // lambda?
     else if exp.is_lambda() {
-        Ok(make_procedure(exp.lambda_parameters()?, exp.lambda_body()?, env))
+        Ok(make_procedure(
+            exp.lambda_parameters()?,
+            exp.lambda_body()?,
+            env,
+        ))
     }
     // begin?
     else if exp.is_begin() {
         eval_sequence(exp.begin_actions()?, env)
     }
-    
     // uh oh
     else {
         Err(format!("no eval rule for: {:?}", exp))
@@ -117,7 +108,7 @@ mod tests {
         let lexer = Lexer::new(s, "test.scm");
         Parser::new(lexer)
     }
-    
+
     #[test]
     fn eval_begin_3() {
         let mut env = Env::new();
@@ -128,7 +119,7 @@ mod tests {
         assert_eq!(result, Obj::new_int(3, None));
         assert_ne!(result, Obj::new_int(1, None));
     }
-    
+
     #[test]
     fn eval_begin_2() {
         let mut env = Env::new();
@@ -139,7 +130,7 @@ mod tests {
         assert_eq!(result, Obj::new_int(3, None));
         assert_ne!(result, Obj::new_int(1, None));
     }
-    
+
     #[test]
     fn eval_begin_1() {
         let mut env = Env::new();

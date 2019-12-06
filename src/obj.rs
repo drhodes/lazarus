@@ -29,7 +29,7 @@ impl Obj {
     pub fn new_bool(b: bool, loc: Option<Loc>) -> Obj {
         Obj::new(ObjVal::Bool(b), loc)
     }
-    
+
     pub fn new_env(env: Env, loc: Option<Loc>) -> Obj {
         Obj::new(ObjVal::Env(env), loc)
     }
@@ -284,7 +284,7 @@ impl Obj {
     pub fn lambda_parameters(&self) -> EvalResult<Obj> {
         self.cadr()
     }
-    
+
     pub fn lambda_body(&self) -> EvalResult<Obj> {
         self.cddr()
     }
@@ -292,7 +292,7 @@ impl Obj {
     pub fn is_begin(&self) -> bool {
         self.is_tagged_list("begin")
     }
-    
+
     pub fn begin_actions(&self) -> EvalResult<Obj> {
         self.cdr()
     }
@@ -300,7 +300,7 @@ impl Obj {
     pub fn is_last_expr(&self) -> EvalResult<bool> {
         self.cdr()?.is_null()
     }
-    
+
     pub fn first_expr(&self) -> EvalResult<Obj> {
         self.car()
     }
@@ -308,7 +308,35 @@ impl Obj {
         self.cdr()
     }
 
-    
+    // cond ------------------------------------------------------------------
+    // skip cond for now.
+    // pub fn is_cond(&self) -> bool {
+    //     self.is_tagged_list("cond")
+    // }
+
+    // pub fn cond_clauses(&self) -> EvalResult<Obj> {
+    //     self.cdr()
+    // }
+
+    // pub fn cond_predicate(&self) -> EvalResult<Obj> {
+    //     self.car()
+    // }
+
+    // pub fn is_cond_else_clause(&self) -> bool {
+    //     self.cond_predicate().string_matches("else")
+    // }
+
+    // pub fn cond_actions(&self) -> EvalResult<Obj> {
+    //     unimplemented()
+    // }
+
+    // pub fn cond_to_if(&self) -> EvalResult<Obj> {
+    //     unimplemented()
+    // }
+
+    // pub fn expand_clauses(&self) -> EvalResult<Obj> {
+    //     unimplemented()
+    // }
 }
 
 #[cfg(test)]
