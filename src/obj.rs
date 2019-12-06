@@ -122,7 +122,7 @@ impl Obj {
             Err(format!("Can't call car on empty list"))
         } else {
             Ok(self.list_items()?[0].clone())
-         }
+        }
     }
 
     pub fn cdr(&self) -> EvalResult<Obj> {
@@ -140,11 +140,11 @@ impl Obj {
     pub fn cadr(&self) -> EvalResult<Obj> {
         self.cdr()?.car()
     }
-    
+
     pub fn caddr(&self) -> EvalResult<Obj> {
         self.cdr()?.cdr()?.car()
     }
-    
+
     pub fn cddr(&self) -> EvalResult<Obj> {
         self.cdr()?.cdr()
     }
@@ -175,7 +175,7 @@ impl Obj {
     pub fn text_of_quotation(&self) -> EvalResult<Obj> {
         self.cadr()
     }
-    
+
     pub fn is_assignment(&self) -> bool {
         self.is_tagged_list("set!")
     }
@@ -204,15 +204,14 @@ impl Obj {
             self.caddr()
         }
     }
-    
-    
-    
+
     fn make_lambda(params: Obj, body: Obj) -> Obj {
-        Obj::new_list(vec!( Obj::new_symb("lambda".to_string(), None),
-                            params,
-                            body ), None)
+        Obj::new_list(
+            vec![Obj::new_symb("lambda".to_string(), None), params, body],
+            None,
+        )
     }
-    
+
     pub fn definition_value(&self) -> EvalResult<Obj> {
         if self.cadr()?.is_symbol() {
             self.caddr()

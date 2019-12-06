@@ -1,8 +1,8 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::rc::Rc;
-use std::hash::Hasher;
 use std::hash::Hash;
+use std::hash::Hasher;
+use std::rc::Rc;
 
 pub struct EvalErr {
     msg: String,
@@ -100,10 +100,6 @@ impl PartialEq for Symb {
 
 impl Eq for Symb {}
 
-
-
-
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum ObjVal {
     Symbol(String),
@@ -118,7 +114,6 @@ pub struct Obj {
     pub loc: Option<Loc>, // experimental
 }
 
-
 impl PartialEq for Obj {
     fn eq(&self, other: &Self) -> bool {
         self.val == other.val
@@ -126,7 +121,6 @@ impl PartialEq for Obj {
 }
 
 impl Eq for Obj {}
-
 
 #[derive(Debug)]
 pub struct Env {

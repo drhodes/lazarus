@@ -42,17 +42,19 @@ impl Env {
             Some(value) => {
                 self.define_variable(var, obj);
                 Ok(())
-            },
+            }
             None => {
                 if self.is_global() {
                     Err(format!("Unbound varaible: SET! {:?}", var))
                 } else {
-                    self.enclosing.as_mut().unwrap().set_variable_value(var, obj)
+                    self.enclosing
+                        .as_mut()
+                        .unwrap()
+                        .set_variable_value(var, obj)
                 }
             }
         }
     }
-    
 }
 
 // ------------------------------------------------------------------

@@ -24,11 +24,10 @@ fn eval_definition(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
 
 
 fn eval(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
-    // self-evaluating? 
+    // self-evaluating?
     if exp.is_self_evaluating() {
         Ok(exp)
     }
-    
     // variable?
     else if exp.is_variable() {
         // TODO think about how to better manage symbols.
@@ -37,23 +36,18 @@ fn eval(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
             Err(msg) => Err(msg),
         }
     }
-    
-    // quoted? 
+    // quoted?
     else if exp.is_quoted() {
         exp.text_of_quotation()
     }
-    
-    // assignment? 
+    // assignment?
     else if exp.is_assignment() {
         eval_assignment(exp, env)
     }
-
     // definition?
     else if exp.is_definition() {
         eval_definition(exp, env)
     }
-    
-    // uh oh ---------------------------------------------------------------------------------------
     else {
         Err(format!("no eval rule for: {:?}", exp))
     }
@@ -83,7 +77,7 @@ mod tests {
         println!("{:?}", env);
         let val = &env.lookup_variable_value(&sym).unwrap();
         assert_eq!(val, &Obj::new_int(42, None));
-        assert_ne!(val, &Obj::new_int(43, None));        
+        assert_ne!(val, &Obj::new_int(43, None));
     }
 
     #[test]
@@ -91,16 +85,16 @@ mod tests {
         let mut env = Env::new();
         let sym = Symb::new("foo", "test-eval.rs".to_owned(), 0);
         env.define_variable(&sym, Obj::new_int(123, None));
-            
+
         let mut parser = get_parser("(set! foo 42)");
         let parse_results = parser.list().unwrap();
         let obj = parse_results.to_obj();
         let result = eval(obj, &mut env);
         println!("{:?}", env);
-        
+
         let val = &env.lookup_variable_value(&sym).unwrap();
         assert_eq!(val, &Obj::new_int(42, None));
-        assert_ne!(val, &Obj::new_int(43, None));        
+        assert_ne!(val, &Obj::new_int(43, None));
     }
 
     #[test]
@@ -108,21 +102,20 @@ mod tests {
         let mut env1 = Env::new();
         let mut env2 = Env::new();
         let sym = Symb::new("foo", "test-eval.rs".to_owned(), 0);
-        
+
         env1.define_variable(&sym, Obj::new_int(123, None));
         env2.enclosing = Some(box env1);
-        
+
         let mut parser = get_parser("(set! foo 42)");
         let parse_results = parser.list().unwrap();
         let obj = parse_results.to_obj();
         let result = eval(obj, &mut env2);
-        
+
         let val = &env2.lookup_variable_value(&sym).unwrap();
         assert_eq!(val, &Obj::new_int(42, None));
-        assert_ne!(val, &Obj::new_int(43, None));        
+        assert_ne!(val, &Obj::new_int(43, None));
     }
 
-    
     #[test]
     fn eval_number_set() {
         let mut parser = get_parser("(set! foo 42)");
@@ -162,6 +155,4 @@ mod tests {
             _ => panic!("should have got a 1, but got: {:?}", results),
         }
     }
-
-    
 }
