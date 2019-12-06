@@ -29,6 +29,10 @@ impl Obj {
     pub fn new_bool(b: bool, loc: Option<Loc>) -> Obj {
         Obj::new(ObjVal::Bool(b), loc)
     }
+    
+    pub fn new_env(env: Env, loc: Option<Loc>) -> Obj {
+        Obj::new(ObjVal::Env(env), loc)
+    }
 
     // the Symb type exists and Obj::Symbol exists.
     // Symb is convenient.

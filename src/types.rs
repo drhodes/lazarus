@@ -107,6 +107,7 @@ pub enum ObjVal {
     Int(i64),
     List(Vec<Obj>),
     Bool(bool),
+    Env(Env),
 }
 
 #[derive(Debug, Clone)]
@@ -123,14 +124,14 @@ impl PartialEq for Obj {
 
 impl Eq for Obj {}
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Env {
     pub frame: Frame,
     /// if enclosing is None, then it is the global environment.
     pub enclosing: Option<Box<Env>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Frame {
     pub symbol_table: HashMap<Symb, Obj>,
 }
