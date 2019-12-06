@@ -276,6 +276,39 @@ impl Obj {
             Ok(Obj::make_lambda(self.cdadr()?, self.cddr()?))
         }
     }
+
+    pub fn is_lambda(&self) -> bool {
+        self.is_tagged_list("lambda")
+    }
+
+    pub fn lambda_parameters(&self) -> EvalResult<Obj> {
+        self.cadr()
+    }
+    
+    pub fn lambda_body(&self) -> EvalResult<Obj> {
+        self.cddr()
+    }
+
+    pub fn is_begin(&self) -> bool {
+        self.is_tagged_list("begin")
+    }
+    
+    pub fn begin_actions(&self) -> EvalResult<Obj> {
+        self.cdr()
+    }
+
+    pub fn is_last_expr(&self) -> EvalResult<bool> {
+        self.cdr()?.is_null()
+    }
+    
+    pub fn first_expr(&self) -> EvalResult<Obj> {
+        self.car()
+    }
+    pub fn rest_expr(&self) -> EvalResult<Obj> {
+        self.cdr()
+    }
+
+    
 }
 
 #[cfg(test)]

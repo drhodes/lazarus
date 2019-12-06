@@ -30,6 +30,36 @@ fn eval_if(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     }
 }
 
+fn make_procedure(parameters: Obj, body: Obj, env: &mut Env) -> Obj {
+    Obj::new_list(
+        vec![
+            Obj::new_symb("procedure".to_owned(), None),
+            parameters,
+            body,
+            // achtung‽ Cloning a whole environment here.
+            Obj::new_env(env.clone(), None),
+        ],
+        None,
+    )
+}
+
+// fn sequence_to_exp(seq: Obj) -> EvalResult<Obj> {
+//     if (seq.is_null()?.is_true()) {
+//         seq
+//     } else if seq.is_last_expr() {
+        
+//     }
+// }
+
+fn eval_sequence(xs: Obj, env: &mut Env) -> EvalResult<Obj> {
+    if xs.is_last_expr()? {
+        eval(xs.car()?, env)
+    } else {
+        eval(xs.car()?, env)?;
+        eval_sequence(xs.rest_expr()?, env)        
+    }
+}
+
 fn eval(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     // self-evaluating?
     if exp.is_self_evaluating() {
@@ -59,6 +89,15 @@ fn eval(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     else if exp.is_if() {
         eval_if(exp, env)
     }
+    // lambda?
+    else if exp.is_lambda() {
+        Ok(make_procedure(exp.lambda_parameters()?, exp.lambda_body()?, env))
+    }
+    // begin?
+    else if exp.is_begin() {
+        eval_sequence(exp.begin_actions()?, env)
+    }
+    
     // uh oh
     else {
         Err(format!("no eval rule for: {:?}", exp))
@@ -77,6 +116,39 @@ mod tests {
     fn get_parser(s: &str) -> Parser {
         let lexer = Lexer::new(s, "test.scm");
         Parser::new(lexer)
+    }
+    
+    #[test]
+    fn eval_begin_3() {
+        let mut env = Env::new();
+        let mut parser = get_parser("(begin (define three 5) (set! three 3) 1 2 3 4 three)");
+        let parse_results = parser.list().unwrap();
+        let obj = parse_results.to_obj();
+        let result = eval(obj, &mut env).unwrap();
+        assert_eq!(result, Obj::new_int(3, None));
+        assert_ne!(result, Obj::new_int(1, None));
+    }
+    
+    #[test]
+    fn eval_begin_2() {
+        let mut env = Env::new();
+        let mut parser = get_parser("(begin (define three 5) (set! three 3) three)");
+        let parse_results = parser.list().unwrap();
+        let obj = parse_results.to_obj();
+        let result = eval(obj, &mut env).unwrap();
+        assert_eq!(result, Obj::new_int(3, None));
+        assert_ne!(result, Obj::new_int(1, None));
+    }
+    
+    #[test]
+    fn eval_begin_1() {
+        let mut env = Env::new();
+        let mut parser = get_parser("(begin 1 2 3)");
+        let parse_results = parser.list().unwrap();
+        let obj = parse_results.to_obj();
+        let result = eval(obj, &mut env).unwrap();
+        assert_eq!(result, Obj::new_int(3, None));
+        assert_ne!(result, Obj::new_int(1, None));
     }
 
     #[test]
