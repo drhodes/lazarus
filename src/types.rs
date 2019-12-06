@@ -1,6 +1,8 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
+use std::hash::Hasher;
+use std::hash::Hash;
 
 pub struct EvalErr {
     msg: String,
@@ -77,12 +79,30 @@ pub enum Ast {
     Leaf(Token),
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, Clone)]
 pub struct Symb {
     pub name: String,
     pub filename: String,
     pub pos: usize,
 }
+
+impl Hash for Symb {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
+    }
+}
+
+impl PartialEq for Symb {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
+    }
+}
+
+impl Eq for Symb {}
+
+
+
+
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ObjVal {
@@ -92,11 +112,21 @@ pub enum ObjVal {
     List(Vec<Obj>),
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Obj {
     pub val: Rc<RefCell<ObjVal>>,
     pub loc: Option<Loc>, // experimental
 }
+
+
+impl PartialEq for Obj {
+    fn eq(&self, other: &Self) -> bool {
+        self.val == other.val
+    }
+}
+
+impl Eq for Obj {}
+
 
 #[derive(Debug)]
 pub struct Env {

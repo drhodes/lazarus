@@ -122,9 +122,29 @@ impl Obj {
             Err(format!("Can't call car on empty list"))
         } else {
             Ok(self.list_items()?[0].clone())
+         }
+    }
+
+    pub fn cdr(&self) -> EvalResult<Obj> {
+        if !self.is_list() {
+            Err(format!("Can't call cdr on {:?}", self.describe_type()))
+        } else if self.is_empty_list()? {
+            Err(format!("Can't call cdr on empty list"))
+        } else {
+            let mut items = self.list_items()?;
+            items.remove(0);
+            Ok(Obj::new_list(items, self.loc.clone()))
         }
     }
 
+    pub fn cadr(&self) -> EvalResult<Obj> {
+        self.cdr()?.car()
+    }
+    
+    pub fn caddr(&self) -> EvalResult<Obj> {
+        self.cdr()?.cdr()?.car()
+    }
+    
     pub fn string_matches(&self, s: &str) -> bool {
         if let ObjVal::Symbol(sym) = &*self.val.borrow() {
             s == sym
@@ -144,6 +164,10 @@ impl Obj {
         self.is_tagged_list("quote")
     }
 
+    pub fn text_of_quotation(&self) -> EvalResult<Obj> {
+        self.cadr()
+    }
+    
     pub fn is_assignment(&self) -> bool {
         self.is_tagged_list("set!")
     }
@@ -152,6 +176,15 @@ impl Obj {
         self.is_tagged_list("define")
     }
 
+    pub fn assignment_variable(&self) -> EvalResult<Symb> {
+        self.cadr()?.to_symb()
+    }
+
+    pub fn assignment_value(&self) -> EvalResult<Obj> {
+        self.caddr()
+    }
+
+    
     /// Definitions have one of two forms:
     /// | (define ⟨var⟩ ⟨value⟩)
     /// | (define ⟨var⟩ (lambda (⟨param₁⟩ … ⟨paramₙ⟩) ⟨body⟩))

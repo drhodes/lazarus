@@ -36,6 +36,23 @@ impl Env {
             }
         }
     }
+
+    pub fn set_variable_value(&mut self, var: &Symb, obj: Obj) -> EvalResult<()> {
+        match self.frame.get(var) {
+            Some(value) => {
+                self.define_variable(var, obj);
+                Ok(())
+            },
+            None => {
+                if self.is_global() {
+                    Err(format!("Unbound varaible: SET! {:?}", var))
+                } else {
+                    self.enclosing.as_mut().unwrap().set_variable_value(var, obj)
+                }
+            }
+        }
+    }
+    
 }
 
 // ------------------------------------------------------------------
@@ -45,7 +62,7 @@ mod tests {
 
     #[test]
     fn env_define_check() {
-        let mut env = Env::new();
+        let env = Env::new();
         let mut inner = Env::new();
         let sym = Symb::new("x", "env.rs".to_owned(), 42);
         let obj1 = Obj::new_int(12, None);
