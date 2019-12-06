@@ -22,6 +22,13 @@ fn eval_definition(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     Ok(val.clone())
 }
 
+fn eval_if(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
+    if eval(exp.if_predicate()?, env)?.is_true() {
+        eval(exp.if_consequent()?, env)
+    } else {
+        eval(exp.if_alternative()?, env)
+    }
+}
 
 fn eval(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     // self-evaluating?
@@ -48,6 +55,11 @@ fn eval(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     else if exp.is_definition() {
         eval_definition(exp, env)
     }
+    // if?
+    else if exp.is_if() {
+        eval_if(exp, env)
+    }
+    // uh oh
     else {
         Err(format!("no eval rule for: {:?}", exp))
     }
@@ -66,6 +78,29 @@ mod tests {
         let lexer = Lexer::new(s, "test.scm");
         Parser::new(lexer)
     }
+
+    #[test]
+    fn eval_if_1() {
+        let mut env = Env::new();
+        let mut parser = get_parser("(if 1 2 3)");
+        let parse_results = parser.list().unwrap();
+        let obj = parse_results.to_obj();
+        let result = eval(obj, &mut env).unwrap();
+        assert_eq!(result, Obj::new_int(2, None));
+        assert_ne!(result, Obj::new_int(3, None));
+    }
+
+    #[test]
+    fn eval_if_2() {
+        let mut env = Env::new();
+        let mut parser = get_parser("(if 1 2.0 3)");
+        let parse_results = parser.list().unwrap();
+        let obj = parse_results.to_obj();
+        let result = eval(obj, &mut env).unwrap();
+        assert_eq!(result, Obj::new_float(2.0, None));
+        assert_ne!(result, Obj::new_int(3, None));
+    }
+
     #[test]
     fn eval_definition_1() {
         let mut env = Env::new();

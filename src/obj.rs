@@ -26,6 +26,10 @@ impl Obj {
         Obj::new(ObjVal::Symbol(name), loc)
     }
 
+    pub fn new_bool(b: bool, loc: Option<Loc>) -> Obj {
+        Obj::new(ObjVal::Bool(b), loc)
+    }
+
     // the Symb type exists and Obj::Symbol exists.
     // Symb is convenient.
     // Obj::Symbol can be stored on the heap.
@@ -73,6 +77,22 @@ impl Obj {
         }
     }
 
+    pub fn is_bool(&self) -> bool {
+        if let ObjVal::Bool(..) = *self.val.borrow() {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    pub fn is_true(&self) -> bool {
+        if let ObjVal::Bool(b) = *self.val.borrow() {
+            b
+        } else {
+            true
+        }
+    }
+
     pub fn is_variable(&self) -> bool {
         self.is_symbol()
     }
@@ -88,6 +108,8 @@ impl Obj {
             return "float";
         } else if self.is_list() {
             return "list";
+        } else if self.is_bool() {
+            return "bool";
         } else {
             return "symbol";
         }
@@ -152,7 +174,15 @@ impl Obj {
     pub fn cdadr(&self) -> EvalResult<Obj> {
         self.cdr()?.car()?.cdr()
     }
-    
+
+    pub fn cdddr(&self) -> EvalResult<Obj> {
+        self.cddr()?.cdr()
+    }
+
+    pub fn cadddr(&self) -> EvalResult<Obj> {
+        self.cdddr()?.car()
+    }
+
     pub fn string_matches(&self, s: &str) -> bool {
         if let ObjVal::Symbol(sym) = &*self.val.borrow() {
             s == sym
@@ -192,7 +222,30 @@ impl Obj {
         self.caddr()
     }
 
-    
+    pub fn is_if(&self) -> bool {
+        self.is_tagged_list("if")
+    }
+
+    pub fn if_predicate(&self) -> EvalResult<Obj> {
+        self.cadr()
+    }
+
+    pub fn if_consequent(&self) -> EvalResult<Obj> {
+        self.caddr()
+    }
+
+    pub fn if_alternative(&self) -> EvalResult<Obj> {
+        if !self.cdddr()?.is_null()? {
+            self.cadddr()
+        } else {
+            Ok(Obj::new_bool(false, None))
+        }
+    }
+
+    pub fn is_null(&self) -> EvalResult<bool> {
+        self.is_empty_list()
+    }
+
     /// Definitions have one of two forms:
     /// | (define ⟨var⟩ ⟨value⟩)
     /// | (define ⟨var⟩ (lambda (⟨param₁⟩ … ⟨paramₙ⟩) ⟨body⟩))

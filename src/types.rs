@@ -106,6 +106,7 @@ pub enum ObjVal {
     Float(f64),
     Int(i64),
     List(Vec<Obj>),
+    Bool(bool),
 }
 
 #[derive(Debug, Clone)]
