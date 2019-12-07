@@ -28,6 +28,10 @@ impl Symb {
             pos,
         }
     }
+
+    pub fn new_unknown(name: &str) -> Symb {
+        Symb::new(name, "<unknown file>".to_owned(), 0)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -108,6 +112,7 @@ pub enum ObjVal {
     List(Vec<Obj>),
     Bool(bool),
     Env(Env),
+    PrimFunc(fn(Obj) -> EvalResult<Obj>),
 }
 
 #[derive(Debug, Clone)]
@@ -138,6 +143,6 @@ pub struct Frame {
 
 pub type EvalResult<T> = Result<T, String>;
 
-fn unimplemented<T>() -> EvalResult<T> {
+pub fn unimplemented_eval<T>() -> EvalResult<T> {
     Err("unimplemented".to_string())
 }

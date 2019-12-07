@@ -48,6 +48,44 @@ fn eval_sequence(xs: Obj, env: &mut Env) -> EvalResult<Obj> {
     }
 }
 
+fn apply(procedure: Obj, arguments: Obj) -> EvalResult<Obj> {
+    if procedure.is_primitive_procedure() {
+        procedure.primitive_apply_to(arguments)
+    } else if procedure.is_compound_procedure() {
+        let mut env = procedure.environment()?;
+        env.extend(procedure.parameters()?, arguments)?;
+        eval_sequence(procedure.body()?, &mut env)
+    } else {
+        Err(format!("Uknown procedure type: APPLY: {:?}", procedure))
+    }
+}
+
+fn cons(x: Obj, xs: Obj) -> EvalResult<Obj> {
+    if let ObjVal::List(ys) = &*xs.val.borrow() {
+        let mut zs = ys.clone();
+        zs.insert(0, x);
+        Ok(Obj::new_list(zs, None))
+    } else {
+        Err("cons encounters non-list".to_string())
+    }
+}
+
+fn list_of_values(exps: Obj, env: &mut Env) -> EvalResult<Obj> {
+    if exps.has_no_operands()? {
+        Ok(Obj::new_list(vec!(), None))
+    } else {
+        cons(eval(exps.first_operand()?, env)?,
+             list_of_values(exps.rest_operands()?, env)?)
+    }
+}
+
+// ________________________________________________________________________________
+//                                            _
+//                             _____   ____ _| |
+//                            / _ \ \ / / _` | |
+//                           |  __/\ V / (_| | |
+//                            \___| \_/ \__,_|_|
+
 fn eval(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     // self-evaluating?
     if exp.is_self_evaluating() {
@@ -89,11 +127,17 @@ fn eval(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     else if exp.is_begin() {
         eval_sequence(exp.begin_actions()?, env)
     }
+    // application?
+    else if exp.is_application()? {
+        apply(eval(exp.operator()?, env)?,
+              list_of_values(exp.operands()?, env)?)
+    }
     // uh oh
     else {
-        Err(format!("no eval rule for: {:?}", exp))
+        Err(format!("Unknown expression types: {:?}", exp))
     }
 }
+
 
 // TESTS -----------------------------------------------------------------------------
 
@@ -109,6 +153,23 @@ mod tests {
         Parser::new(lexer)
     }
 
+    
+    #[test]
+    fn apply_1() {
+        let mut env = Env::the_global_environment();
+        let mut parser = get_parser("(list 1 2 3)");
+        let parse_results = parser.list().unwrap();
+        let obj = parse_results.to_obj();
+        let result = eval(obj, &mut env).unwrap();
+        assert_eq!(result, Obj::new_list(vec!(
+            Obj::new_int(1, None),
+            Obj::new_int(2, None),
+            Obj::new_int(3, None),
+        ), None));
+    }
+    
+    // need to test eval_sequence
+    
     #[test]
     fn eval_begin_3() {
         let mut env = Env::new();

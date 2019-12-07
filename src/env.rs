@@ -4,12 +4,55 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
+// primitive procedures
+fn car(xs: Obj) -> EvalResult<Obj> {
+    xs.car()
+}
+fn cdr(xs: Obj) -> EvalResult<Obj> {
+    xs.car()
+}
+fn list(xs: Obj) -> EvalResult<Obj> {
+    Ok(xs)
+}
+
 // ------------------------------------------------------------------
 impl Env {
     pub fn new() -> Env {
         Env {
             frame: Frame::new(),
             enclosing: None,
+        }
+    }
+    pub fn the_global_environment() -> Env {
+        let mut env = Env::new();
+        //env.setup();
+        let mut f = |s: &str, func| {
+            let proc = Obj::new_list(
+                vec![Obj::new_symb("primitive".to_owned(), None), func],
+                None,
+            );
+            env.define_variable(&Symb::new_unknown(s), proc);
+        };
+
+        f("true", Obj::new_bool(true, None));
+        f("false", Obj::new_bool(false, None));
+        f("car", Obj::new_primitive_func(car, None));
+        f("cdr", Obj::new_primitive_func(cdr, None));
+        f("list", Obj::new_primitive_func(list, None));
+        env
+    }
+
+    pub fn extend(&mut self, params: Obj, arguments: Obj) -> EvalResult<()> {
+        if params.list_length()? != arguments.list_length()? {
+            Err("params and args need to have same length".to_string())
+        } else {
+            let ps = params.list_items()?;
+            let args = arguments.list_items()?;
+
+            for (p, arg) in ps.iter().zip(args.iter()) {
+                self.define_variable(&p.to_symb()?, arg.clone());
+            }
+            Ok(())
         }
     }
 

@@ -34,6 +34,10 @@ impl Obj {
         Obj::new(ObjVal::Env(env), loc)
     }
 
+    pub fn new_primitive_func(f: fn(Obj) -> EvalResult<Obj>, loc: Option<Loc>) -> Obj {
+        Obj::new(ObjVal::PrimFunc(f), loc)
+    }
+
     // the Symb type exists and Obj::Symbol exists.
     // Symb is convenient.
     // Obj::Symbol can be stored on the heap.
@@ -97,6 +101,14 @@ impl Obj {
         }
     }
 
+    pub fn is_func(&self) -> bool {
+        if let ObjVal::PrimFunc(..) = *self.val.borrow() {
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn is_variable(&self) -> bool {
         self.is_symbol()
     }
@@ -136,6 +148,17 @@ impl Obj {
         } else {
             Err(format!(
                 "Can't call empty_list method on: {:?}",
+                self.describe_type()
+            ))
+        }
+    }
+
+    pub fn list_length(&self) -> EvalResult<usize> {
+        if let ObjVal::List(nodes) = &*self.val.borrow() {
+            Ok(nodes.len())
+        } else {
+            Err(format!(
+                "Can't call list_length method on: {:?}",
                 self.describe_type()
             ))
         }
@@ -229,7 +252,6 @@ impl Obj {
     pub fn is_if(&self) -> bool {
         self.is_tagged_list("if")
     }
-
     pub fn if_predicate(&self) -> EvalResult<Obj> {
         self.cadr()
     }
@@ -337,6 +359,89 @@ impl Obj {
     // pub fn expand_clauses(&self) -> EvalResult<Obj> {
     //     unimplemented()
     // }
+
+    // apply helpers -------------------------------------------------------------------------------
+    pub fn is_application(&self) -> EvalResult<bool> {
+        if self.is_list() {
+            Ok(self.list_length()? > 1)
+        } else {
+            Ok(false)
+        }
+    }
+
+    pub fn operator(&self) -> EvalResult<Obj> {
+        self.car()
+    }
+
+    pub fn operands(&self) -> EvalResult<Obj> {
+        self.cdr()
+    }
+    pub fn has_no_operands(&self) -> EvalResult<bool> {
+        self.is_null()
+    }
+    pub fn first_operand(&self) -> EvalResult<Obj> {
+        self.car()
+    }
+    pub fn rest_operands(&self) -> EvalResult<Obj> {
+        self.cdr()
+    }
+
+    pub fn is_primitive_procedure(&self) -> bool {
+        self.is_tagged_list("primitive")
+    }
+
+    pub fn is_compound_procedure(&self) -> bool {
+        self.is_tagged_list("procedure")
+    }
+
+    pub fn is_primitive_implementation(&self) -> EvalResult<Obj> {
+        self.cadr()
+    }
+
+    pub fn primitive_apply_to(&self, args: Obj) -> EvalResult<Obj> {
+        if let ObjVal::List(items) = &*self.val.borrow() {
+            if let ObjVal::PrimFunc(f) = &*items[1].val.borrow() {
+                f(args)
+            } else {
+                Err("Tried to apply something other \
+                     than primitive procedure"
+                    .to_string())
+            }
+        } else {
+            Err("Tried to apply something other \
+                 than primitive procedure"
+                .to_string())
+        }
+    }
+
+    pub fn body(&self) -> EvalResult<Obj> {
+        self.caddr()
+    }
+
+    pub fn parameters(&self) -> EvalResult<Obj> {
+        self.cadr()
+    }
+
+    pub fn environment(&self) -> EvalResult<Env> {
+        if !self.is_compound_procedure() {
+            return Err(format!(
+                "Can only call Obj::environment \
+                 on compound procedure, got: {}",
+                self.describe_type()
+            ));
+        }
+        if let ObjVal::Env(env) = &*self.cadddr()?.val.borrow() {
+            // cloning this.. possible bug, need to see if the values
+            // are going to mutate inside this things as expected by
+            // apply and eval.
+            Ok(env.clone())
+        } else {
+            panic!(
+                "interpeter bug, was expecting env, got: {:?}",
+                self.describe_type()
+            );
+        }
+    }
 }
 
 #[cfg(test)]

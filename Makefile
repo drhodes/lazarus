@@ -1,4 +1,4 @@
-EXE=target/debug/deps/lazarus-f41ca1e27c6e48ff
+EXE=target/debug/deps/lazarus-7159901fdd293aad
 
 profile-perf:
 	perf record -g $(EXE)
