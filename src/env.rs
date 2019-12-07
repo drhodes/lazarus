@@ -23,25 +23,32 @@ impl Env {
             enclosing: None,
         }
     }
+    
     pub fn the_global_environment() -> Env {
         let mut env = Env::new();
-        //env.setup();
-        let mut f = |s: &str, func| {
-            let proc = Obj::new_list(
-                vec![Obj::new_symb("primitive".to_owned(), None), func],
-                None,
-            );
-            env.define_variable(&Symb::new_unknown(s), proc);
+        let mut add_obj = |s: &str, obj| {
+            env.define_variable(&Symb::new_unknown(s), obj);
         };
 
-        f("true", Obj::new_bool(true, None));
-        f("false", Obj::new_bool(false, None));
-        f("car", Obj::new_primitive_func(car, None));
-        f("cdr", Obj::new_primitive_func(cdr, None));
-        f("list", Obj::new_primitive_func(list, None));
+        add_obj("true", Obj::new_bool(true, None));
+        add_obj("false", Obj::new_bool(false, None));
+        
+        env.add_primitive_func("car", car);
+        env.add_primitive_func("cdr", car);
+        env.add_primitive_func("list", list);
         env
     }
-
+    
+    pub fn add_primitive_func(&mut self, funcname: &str, func: fn(Obj) -> EvalResult<Obj>) {
+        let proc = Obj::new_list(
+            vec![Obj::new_symb("primitive".to_owned(), None),
+                 Obj::new_primitive_func(func, None)],
+            None,
+        );
+        self.define_variable(&Symb::new_unknown(funcname), proc);
+        
+    }
+    
     pub fn extend(&mut self, params: Obj, arguments: Obj) -> EvalResult<()> {
         if params.list_length()? != arguments.list_length()? {
             Err("params and args need to have same length".to_string())
