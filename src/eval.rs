@@ -1,7 +1,4 @@
-use crate::env::*;
 use crate::types::*;
-use std::cell::RefCell;
-use std::rc::Rc;
 
 fn eval_assignment(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     let var = exp.assignment_variable()?;
@@ -72,10 +69,12 @@ fn cons(x: Obj, xs: Obj) -> EvalResult<Obj> {
 
 fn list_of_values(exps: Obj, env: &mut Env) -> EvalResult<Obj> {
     if exps.has_no_operands()? {
-        Ok(Obj::new_list(vec!(), None))
+        Ok(Obj::new_list(vec![], None))
     } else {
-        cons(eval(exps.first_operand()?, env)?,
-             list_of_values(exps.rest_operands()?, env)?)
+        cons(
+            eval(exps.first_operand()?, env)?,
+            list_of_values(exps.rest_operands()?, env)?,
+        )
     }
 }
 
@@ -129,15 +128,16 @@ fn eval(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     }
     // application?
     else if exp.is_application()? {
-        apply(eval(exp.operator()?, env)?,
-              list_of_values(exp.operands()?, env)?)
+        apply(
+            eval(exp.operator()?, env)?,
+            list_of_values(exp.operands()?, env)?,
+        )
     }
     // uh oh
     else {
         Err(format!("Unknown expression types: {:?}", exp))
     }
 }
-
 
 // TESTS -----------------------------------------------------------------------------
 
@@ -146,14 +146,43 @@ mod tests {
     use super::*;
     use crate::lexer::Lexer;
     use crate::parser::Parser;
-    use crate::types::*;
 
     fn get_parser(s: &str) -> Parser {
         let lexer = Lexer::new(s, "test.scm");
         Parser::new(lexer)
     }
 
-    
+    fn eval_str(s: &str) -> EvalResult<Obj> {
+        let mut env = Env::the_global_environment();
+        let mut parser = get_parser(s);
+        let parse_results = parser.list().unwrap();
+        let obj = parse_results.to_obj();
+        eval(obj, &mut env)
+    }
+
+    #[test]
+    fn apply_3() {
+        let result =
+            eval_str("(begin (define pair (lambda (x y) (list x y))) (pair 1 2))").unwrap();
+        assert_eq!(
+            result,
+            Obj::new_list(vec!(Obj::new_int(1, None), Obj::new_int(2, None),), None)
+        );
+    }
+
+    #[test]
+    fn apply_2() {
+        let mut env = Env::the_global_environment();
+        let mut parser = get_parser("(begin (define dup (lambda (x) (list x x))) (dup 1))");
+        let parse_results = parser.list().unwrap();
+        let obj = parse_results.to_obj();
+        let result = eval(obj, &mut env).unwrap();
+        assert_eq!(
+            result,
+            Obj::new_list(vec!(Obj::new_int(1, None), Obj::new_int(1, None),), None)
+        );
+    }
+
     #[test]
     fn apply_1() {
         let mut env = Env::the_global_environment();
@@ -161,15 +190,21 @@ mod tests {
         let parse_results = parser.list().unwrap();
         let obj = parse_results.to_obj();
         let result = eval(obj, &mut env).unwrap();
-        assert_eq!(result, Obj::new_list(vec!(
-            Obj::new_int(1, None),
-            Obj::new_int(2, None),
-            Obj::new_int(3, None),
-        ), None));
+        assert_eq!(
+            result,
+            Obj::new_list(
+                vec!(
+                    Obj::new_int(1, None),
+                    Obj::new_int(2, None),
+                    Obj::new_int(3, None),
+                ),
+                None
+            )
+        );
     }
-    
+
     // need to test eval_sequence
-    
+
     #[test]
     fn eval_begin_3() {
         let mut env = Env::new();
@@ -232,7 +267,7 @@ mod tests {
         let mut parser = get_parser("(define foo 42)");
         let parse_results = parser.list().unwrap();
         let obj = parse_results.to_obj();
-        let result = eval(obj, &mut env);
+        let _ = eval(obj, &mut env);
         println!("{:?}", env);
         let val = &env.lookup_variable_value(&sym).unwrap();
         assert_eq!(val, &Obj::new_int(42, None));
@@ -248,7 +283,7 @@ mod tests {
         let mut parser = get_parser("(set! foo 42)");
         let parse_results = parser.list().unwrap();
         let obj = parse_results.to_obj();
-        let result = eval(obj, &mut env);
+        let _ = eval(obj, &mut env);
         println!("{:?}", env);
 
         let val = &env.lookup_variable_value(&sym).unwrap();
@@ -268,7 +303,7 @@ mod tests {
         let mut parser = get_parser("(set! foo 42)");
         let parse_results = parser.list().unwrap();
         let obj = parse_results.to_obj();
-        let result = eval(obj, &mut env2);
+        let _ = eval(obj, &mut env2);
 
         let val = &env2.lookup_variable_value(&sym).unwrap();
         assert_eq!(val, &Obj::new_int(42, None));

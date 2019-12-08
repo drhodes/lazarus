@@ -49,7 +49,8 @@ impl Obj {
         if let ObjVal::Symbol(sym) = &*self.val.borrow() {
             Ok(Symb::new(&sym.clone(), "".to_owned(), 0))
         } else {
-            Err("Not a symbol!".to_string())
+            //self.pretty();
+            Err(format!("Not a symbol!: {:?}", self))
         }
     }
 
@@ -444,12 +445,15 @@ impl Obj {
     }
 }
 
+
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::lexer::Lexer;
     use crate::parser::Parser;
-    use crate::types::*;
+    //use crate::types::*;
 
     fn get_parser(s: &str) -> Parser {
         let lexer = Lexer::new(s, "test.scm");

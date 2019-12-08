@@ -1,8 +1,5 @@
-use crate::ast::*;
 use crate::lexer;
-use crate::lexer::*;
 use crate::types::*;
-use std::ops;
 
 pub type ParserResult = Result<Ast, String>;
 
@@ -216,7 +213,8 @@ impl Parser {
 #[cfg(test)]
 mod tests {
     use super::*;
-
+    use crate::lexer::*;
+    
     fn get_tokens(s: &str) -> Vec<Token> {
         let lexer = Lexer::new(s, "test.scm");
         let mut toks = vec![];
@@ -260,10 +258,10 @@ mod tests {
         let results = parser.list();
 
         match results {
-            Err(msg) => {
+            Err(_) => {
                 //panic!("this was supposed to fail,");
             }
-            Ok(xs) => {
+            Ok(_) => {
                 panic!("this was supposed to fail");
             }
         }
@@ -276,7 +274,7 @@ mod tests {
 
         match results {
             Ok(node) => match &node {
-                Ast::Node { rule, nodes } => {
+                Ast::Node { rule, nodes:_ } => {
                     println!("{:?}", node);
                     node.pretty();
                     assert_eq!(rule, &Rule::List);
@@ -296,7 +294,7 @@ mod tests {
 
         match results {
             Ok(xs) => match xs {
-                Ast::Node { rule, nodes } => {
+                Ast::Node { rule:_, nodes } => {
                     assert_eq!(nodes.len(), 4);
                 }
                 _ => panic!("This should not be a leaf!"),

@@ -4,22 +4,6 @@ use std::hash::Hash;
 use std::hash::Hasher;
 use std::rc::Rc;
 
-pub struct EvalErr {
-    msg: String,
-    filename: String,
-    pos: usize,
-}
-
-impl EvalErr {
-    pub fn new(msg: &str, filename: String, pos: usize) -> EvalErr {
-        EvalErr {
-            msg: msg.to_owned(),
-            filename,
-            pos,
-        }
-    }
-}
-
 impl Symb {
     pub fn new(name: &str, filename: String, pos: usize) -> Symb {
         Symb {

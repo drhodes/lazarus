@@ -1,5 +1,5 @@
 use crate::types::*;
-use std::cell::Cell;
+//use std::cell::Cell;
 
 impl Ast {
     // constructors
@@ -38,7 +38,7 @@ impl Ast {
                 Tok::Int(..) => true,
                 _ => false,
             },
-            Ast::Node { rule, nodes } => {
+            Ast::Node { rule, .. } => {
                 match rule {
                     // what is the role of Empty here?
                     // maybe Ast should have another
@@ -53,7 +53,7 @@ impl Ast {
     pub fn to_obj(&self) -> Obj {
         match &self {
             Ast::Leaf(leaf) => leaf.to_obj(),
-            Ast::Node { rule, nodes } => {
+            Ast::Node { rule:_, nodes } => {
                 let mut objs = vec![];
                 for node in nodes {
                     objs.push(node.to_obj())

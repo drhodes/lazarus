@@ -1,8 +1,4 @@
 use crate::types::*;
-use std::cell::Cell;
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::rc::Rc;
 
 // primitive procedures
 fn car(xs: Obj) -> EvalResult<Obj> {
@@ -89,7 +85,7 @@ impl Env {
 
     pub fn set_variable_value(&mut self, var: &Symb, obj: Obj) -> EvalResult<()> {
         match self.frame.get(var) {
-            Some(value) => {
+            Some(..) => {
                 self.define_variable(var, obj);
                 Ok(())
             }
@@ -118,7 +114,7 @@ mod tests {
         let mut inner = Env::new();
         let sym = Symb::new("x", "env.rs".to_owned(), 42);
         let obj1 = Obj::new_int(12, None);
-        let obj3 = Obj::new_int(345345, None);
+        let _obj3 = Obj::new_int(345345, None);
         let obj2 = obj1.clone();
 
         inner.enclosing = Some(box env);
@@ -135,7 +131,7 @@ mod tests {
         let mut inner = Env::new();
         let sym = Symb::new("x", "env.rs".to_owned(), 42);
         let obj1 = Obj::new_int(12, None);
-        let obj3 = Obj::new_int(345345, None);
+        let _obj3 = Obj::new_int(345345, None);
         let obj2 = obj1.clone();
 
         outer.define_variable(&sym, obj1);
