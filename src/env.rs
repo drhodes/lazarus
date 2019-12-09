@@ -1,14 +1,42 @@
 use crate::types::*;
 
 // primitive procedures
+
+// these primitive procedures accept a list of arguments.
+
 fn car(xs: Obj) -> EvalResult<Obj> {
-    xs.car()
+    if xs.list_length()? > 1 {
+        Err(format!("car only takes one argument, got: {:?}", xs))
+    } else {
+        xs.car()?.car()
+    }
 }
-fn cdr(xs: Obj) -> EvalResult<Obj> {
-    xs.car()
+pub fn cdr(xs: Obj) -> EvalResult<Obj> {
+    if xs.list_length()? > 1 {
+        Err(format!("cdr only takes one argument, got: {:?}", xs))
+    } else {
+        xs.car()?.cdr()
+    }
 }
+
 fn list(xs: Obj) -> EvalResult<Obj> {
     Ok(xs)
+}
+
+fn is_null(xs: Obj) -> EvalResult<Obj> {
+    Ok(Obj::new_bool(xs.is_null()?, xs.loc.clone()))
+}
+
+fn mul(xs: Obj) -> EvalResult<Obj> {
+    let mut result: i64 = 1;
+    for x in xs.list_items()?.iter() {
+        if let ObjVal::Int(n) = *x.val.borrow() {
+            result *= n;
+        } else {
+            return Err(format!("mul: needs numbers, got: {:?}", x));
+        }
+    }   
+    Ok(Obj::new_int(result, xs.loc.clone()))
 }
 
 // ------------------------------------------------------------------
@@ -30,8 +58,10 @@ impl Env {
         add_obj("false", Obj::new_bool(false, None));
         
         env.add_primitive_func("car", car);
-        env.add_primitive_func("cdr", car);
+        env.add_primitive_func("cdr", cdr);
         env.add_primitive_func("list", list);
+        env.add_primitive_func("null?", is_null);
+        env.add_primitive_func("mul", mul);
         env
     }
     

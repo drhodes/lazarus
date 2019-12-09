@@ -4,7 +4,6 @@ fn eval_assignment(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     let var = exp.assignment_variable()?;
     let val = exp.assignment_value()?;
     env.set_variable_value(&var, val.clone())?;
-    // departs from sicp to appease type system.
     Ok(val.clone())
 }
 
@@ -85,7 +84,7 @@ fn list_of_values(exps: Obj, env: &mut Env) -> EvalResult<Obj> {
 //                           |  __/\ V / (_| | |
 //                            \___| \_/ \__,_|_|
 
-fn eval(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
+pub fn eval(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     // self-evaluating?
     if exp.is_self_evaluating() {
         Ok(exp)
@@ -144,6 +143,7 @@ fn eval(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::env::cdr;
     use crate::lexer::Lexer;
     use crate::parser::Parser;
 
@@ -157,13 +157,80 @@ mod tests {
         let mut parser = get_parser(s);
         let parse_results = parser.list().unwrap();
         let obj = parse_results.to_obj();
+        println!("obj: {:?}", obj);
         eval(obj, &mut env)
+    }
+    // ---------------------------------------------------------------------------------------------
+
+    //#[test]
+    fn test_eval_cdr() {
+        let prog = "(cdr (list 1 2 3))";
+        let result = eval_str(prog).unwrap();
+        assert_eq!(
+            result,
+            Obj::new_list(vec!(Obj::new_int(2, None), Obj::new_int(3, None)), None)
+        );
+    }
+
+    #[test]
+    fn test_eval_list_car() {
+        let prog = "(car (list 1 2 3))";
+        let result = eval_str(prog).unwrap();
+        assert_eq!(result, Obj::new_int(1, None),);
+    }
+
+    #[test]
+    fn test_list_of_values() {
+        let mut env = Env::the_global_environment();
+        let prog = "(list 1 2)";
+        let mut parser = get_parser(prog);
+        let parse_results = parser.list().unwrap();
+        let obj = parse_results.to_obj();
+        let result = list_of_values(obj.operands().unwrap(), &mut env).unwrap();
+
+        let inner = Obj::new_list(vec![Obj::new_int(1, None), Obj::new_int(2, None)], None);
+        assert_eq!(result, inner);
+    }
+
+    #[test]
+    fn test_list_list() {
+        let prog = "(list (list 1 2))";
+        let result = eval_str(prog).unwrap();
+        let inner = Obj::new_list(vec![Obj::new_int(1, None), Obj::new_int(2, None)], None);
+        let outer = Obj::new_list(vec![inner], None);
+        assert_eq!(result, outer);
+    }
+
+    #[test]
+    fn test_eval_seq_1() {
+        let mut env = Env::the_global_environment();
+        let seq = Obj::new_list(vec![Obj::new_int(2, None), Obj::new_int(3, None)], None);
+        let result = eval_sequence(seq, &mut env).unwrap();
+        assert_eq!(result, Obj::new_int(3, None));
+    }
+
+    #[test]
+    fn test_eval_list_1() {
+        let prog = "(list 2 3)";
+        let result = eval_str(prog).unwrap();
+        assert_eq!(
+            result,
+            Obj::new_list(vec!(Obj::new_int(2, None), Obj::new_int(3, None),), None)
+        );
+    }
+
+    #[test]
+    fn test_cons() {
+        let xs = Obj::new_list(vec![Obj::new_int(1, None)], None);
+        let x = Obj::new_int(0, None);
+        let expect = Obj::new_list(vec![Obj::new_int(0, None), Obj::new_int(1, None)], None);
+        assert_eq!(cons(x, xs), Ok(expect));
     }
 
     #[test]
     fn apply_3() {
-        let result =
-            eval_str("(begin (define pair (lambda (x y) (list x y))) (pair 1 2))").unwrap();
+        let prog = "(begin (define pair (lambda (x y) (list x y))) (pair 1 2))";
+        let result = eval_str(prog).unwrap();
         assert_eq!(
             result,
             Obj::new_list(vec!(Obj::new_int(1, None), Obj::new_int(2, None),), None)
@@ -172,11 +239,8 @@ mod tests {
 
     #[test]
     fn apply_2() {
-        let mut env = Env::the_global_environment();
-        let mut parser = get_parser("(begin (define dup (lambda (x) (list x x))) (dup 1))");
-        let parse_results = parser.list().unwrap();
-        let obj = parse_results.to_obj();
-        let result = eval(obj, &mut env).unwrap();
+        let prog = "(begin (define dup (lambda (x) (list x x))) (dup 1))";
+        let result = eval_str(prog).unwrap();
         assert_eq!(
             result,
             Obj::new_list(vec!(Obj::new_int(1, None), Obj::new_int(1, None),), None)
@@ -185,11 +249,7 @@ mod tests {
 
     #[test]
     fn apply_1() {
-        let mut env = Env::the_global_environment();
-        let mut parser = get_parser("(list 1 2 3)");
-        let parse_results = parser.list().unwrap();
-        let obj = parse_results.to_obj();
-        let result = eval(obj, &mut env).unwrap();
+        let result = eval_str("(list 1 2 3)").unwrap();
         assert_eq!(
             result,
             Obj::new_list(
@@ -203,59 +263,42 @@ mod tests {
         );
     }
 
-    // need to test eval_sequence
-
     #[test]
     fn eval_begin_3() {
-        let mut env = Env::new();
-        let mut parser = get_parser("(begin (define three 5) (set! three 3) 1 2 3 4 three)");
-        let parse_results = parser.list().unwrap();
-        let obj = parse_results.to_obj();
-        let result = eval(obj, &mut env).unwrap();
+        let prog = "(begin (define three 5) (set! three 3) 1 2 3 4 three)";
+        let result = eval_str(prog).unwrap();
         assert_eq!(result, Obj::new_int(3, None));
         assert_ne!(result, Obj::new_int(1, None));
     }
 
     #[test]
     fn eval_begin_2() {
-        let mut env = Env::new();
-        let mut parser = get_parser("(begin (define three 5) (set! three 3) three)");
-        let parse_results = parser.list().unwrap();
-        let obj = parse_results.to_obj();
-        let result = eval(obj, &mut env).unwrap();
+        let prog = "(begin (define three 5) (set! three 3) three)";
+        let result = eval_str(prog).unwrap();
         assert_eq!(result, Obj::new_int(3, None));
         assert_ne!(result, Obj::new_int(1, None));
     }
 
     #[test]
     fn eval_begin_1() {
-        let mut env = Env::new();
-        let mut parser = get_parser("(begin 1 2 3)");
-        let parse_results = parser.list().unwrap();
-        let obj = parse_results.to_obj();
-        let result = eval(obj, &mut env).unwrap();
+        let prog = "(begin 1 2 3)";
+        let result = eval_str(prog).unwrap();
         assert_eq!(result, Obj::new_int(3, None));
         assert_ne!(result, Obj::new_int(1, None));
     }
 
     #[test]
     fn eval_if_1() {
-        let mut env = Env::new();
-        let mut parser = get_parser("(if 1 2 3)");
-        let parse_results = parser.list().unwrap();
-        let obj = parse_results.to_obj();
-        let result = eval(obj, &mut env).unwrap();
+        let prog = "(if 1 2 3)";
+        let result = eval_str(prog).unwrap();
         assert_eq!(result, Obj::new_int(2, None));
         assert_ne!(result, Obj::new_int(3, None));
     }
 
     #[test]
     fn eval_if_2() {
-        let mut env = Env::new();
-        let mut parser = get_parser("(if 1 2.0 3)");
-        let parse_results = parser.list().unwrap();
-        let obj = parse_results.to_obj();
-        let result = eval(obj, &mut env).unwrap();
+        let prog = "(if 1 2.0 3)";
+        let result = eval_str(prog).unwrap();
         assert_eq!(result, Obj::new_float(2.0, None));
         assert_ne!(result, Obj::new_int(3, None));
     }

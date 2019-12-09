@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 impl Obj {
-    fn new(val: ObjVal, loc: Option<Loc>) -> Obj {
+    pub fn new(val: ObjVal, loc: Option<Loc>) -> Obj {
         Obj {
             val: Rc::new(RefCell::new(val)),
             loc,
@@ -160,7 +160,7 @@ impl Obj {
         } else {
             Err(format!(
                 "Can't call list_length method on: {:?}",
-                self.describe_type()
+                self //.describe_type()
             ))
         }
     }
@@ -292,7 +292,7 @@ impl Obj {
         )
     }
 
-    pub fn definition_value(&self) -> EvalResult<Obj> {
+   pub fn definition_value(&self) -> EvalResult<Obj> {
         if self.cadr()?.is_symbol() {
             self.caddr()
         } else {
