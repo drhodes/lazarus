@@ -39,6 +39,11 @@ fn mul(xs: Obj) -> EvalResult<Obj> {
     Ok(Obj::new_int(result, xs.loc.clone()))
 }
 
+fn eq(xs: Obj) -> EvalResult<Obj> {
+    Ok(Obj::new_bool(xs.list_items()?[0] == xs.list_items()?[1], None))
+}
+
+
 // ------------------------------------------------------------------
 impl Env {
     pub fn new() -> Env {
@@ -62,6 +67,7 @@ impl Env {
         env.add_primitive_func("list", list);
         env.add_primitive_func("null?", is_null);
         env.add_primitive_func("mul", mul);
+        env.add_primitive_func("eq?", eq);
         env
     }
     
