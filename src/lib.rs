@@ -4,12 +4,12 @@
 //#![allow(unused_imports)]
 //#![allow(unused_variables)]
 
-mod ast;
-mod env;
-mod eval;
-mod frame;
-mod lexer;
-mod obj;
-mod parser;
-mod token;
-mod types;
+pub mod ast;
+pub mod env;
+pub mod eval;
+pub mod frame;
+pub mod lexer;
+pub mod obj;
+pub mod parser;
+pub mod token;
+pub mod types;
