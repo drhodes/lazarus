@@ -18,10 +18,26 @@ impl Obj {
         Obj::new(ObjVal::Float(num), loc)
     }
 
-    pub fn new_list(xs: Vec<Obj>, loc: Option<Loc>) -> Obj {
-        Obj::new(ObjVal::List(xs), loc)
+    pub fn nil(loc: Option<Loc>) -> Obj {
+        Obj::new(ObjVal::Nil, loc)
     }
-
+    
+    pub fn list_from_vec(xs: Vec<Obj>, loc: Option<Loc>) -> Obj {
+        let mut list = Obj::empty_list(loc.clone());
+        for x in xs.iter().rev() {
+            list = Obj::new(ObjVal::Cons(x.clone(), list), loc.clone());
+        }
+        list
+    }
+    
+    pub fn empty_list(loc: Option<Loc>) -> Obj {
+        Obj::new(ObjVal::Nil, loc)
+    }
+    
+    pub fn cons(x: Obj, y: Obj) -> Obj {
+        Obj::new(ObjVal::Cons(x.clone(), y.clone()), x.loc.clone())
+    }
+    
     pub fn new_symb(name: String, loc: Option<Loc>) -> Obj {
         Obj::new(ObjVal::Symbol(name), loc)
     }
@@ -37,7 +53,7 @@ impl Obj {
     pub fn new_primitive_func(f: fn(Obj) -> EvalResult<Obj>, loc: Option<Loc>) -> Obj {
         Obj::new(ObjVal::PrimFunc(f), loc)
     }
-
+    
     // the Symb type exists and Obj::Symbol exists.
     // Symb is convenient.
     // Obj::Symbol can be stored on the heap.
@@ -55,10 +71,10 @@ impl Obj {
     }
 
     pub fn is_list(&self) -> bool {
-        if let ObjVal::List(..) = *self.val.borrow() {
-            return true;
-        } else {
-            return false;
+        match &*self.val.borrow() {
+            ObjVal::Nil => true,
+            ObjVal::Cons(x, y) => y.is_list(),
+            _ => false
         }
     }
 
@@ -131,59 +147,30 @@ impl Obj {
             return "symbol";
         }
     }
-
-    pub fn list_items(&self) -> EvalResult<Vec<Obj>> {
-        if let ObjVal::List(nodes) = &*self.val.borrow() {
-            Ok(nodes.clone())
-        } else {
-            Err(format!(
-                "Can't call list_items method on: {:?}",
-                self.describe_type()
-            ))
-        }
-    }
-
+    
     pub fn is_empty_list(&self) -> EvalResult<bool> {
-        if let ObjVal::List(nodes) = &*self.val.borrow() {
-            Ok(nodes.is_empty())
-        } else {
-            Err(format!(
-                "Can't call empty_list method on: {:?}",
-                self.describe_type()
-            ))
-        }
+        Ok(ObjVal::Nil == *self.val.borrow())
     }
 
     pub fn list_length(&self) -> EvalResult<usize> {
-        if let ObjVal::List(nodes) = &*self.val.borrow() {
-            Ok(nodes.len())
-        } else {
-            Err(format!(
-                "Can't call list_length method on: {:?}",
-                self //.describe_type()
-            ))
+        match &*self.val.borrow() {
+            ObjVal::Nil => Ok(0),
+            ObjVal::Cons(x, y) => Ok(y.list_length()? + 1),
+            _ => Err("list_length was not passed a list".to_owned()),
         }
     }
 
     pub fn car(&self) -> EvalResult<Obj> {
-        if !self.is_list() {
-            Err(format!("Can't call car on {:?}", self.describe_type()))
-        } else if self.is_empty_list()? {
-            Err(format!("Can't call car on empty list"))
-        } else {
-            Ok(self.list_items()?[0].clone())
+        match &*self.val.borrow() {
+            ObjVal::Cons(x, y) => Ok(x.clone()),
+            _ => Err("car was not passed a cons cell".to_owned()),
         }
     }
 
     pub fn cdr(&self) -> EvalResult<Obj> {
-        if !self.is_list() {
-            Err(format!("Can't call cdr on {:?}", self.describe_type()))
-        } else if self.is_empty_list()? {
-            Err(format!("Can't call cdr on empty list"))
-        } else {
-            let mut items = self.list_items()?;
-            items.remove(0);
-            Ok(Obj::new_list(items, self.loc.clone()))
+        match &*self.val.borrow() {
+            ObjVal::Cons(x, y) => Ok(y.clone()),
+            _ => Err("object passed to cdr is not the correct type.".to_owned()),
         }
     }
 
@@ -286,10 +273,11 @@ impl Obj {
     }
 
     fn make_lambda(params: Obj, body: Obj) -> Obj {
-        Obj::new_list(
-            vec![Obj::new_symb("lambda".to_string(), None), params, body],
-            None,
-        )
+        unimplemented!();
+        // Obj::new_list(
+        //     vec![Obj::new_symb("lambda".to_string(), None), params, body],
+        //     None,
+        // )
     }
 
    pub fn definition_value(&self) -> EvalResult<Obj> {
@@ -400,14 +388,12 @@ impl Obj {
     }
 
     pub fn primitive_apply_to(&self, args: Obj) -> EvalResult<Obj> {
-        if let ObjVal::List(items) = &*self.val.borrow() {
-            if let ObjVal::PrimFunc(f) = &*items[1].val.borrow() {
-                f(args)
-            } else {
-                Err("Tried to apply something other \
-                     than primitive procedure"
-                    .to_string())
-            }
+        println!("self: {:?} ", self); 
+        println!("args: {:?} ", args);
+        println!("prim: {:?} ", self.cadr()?);
+       
+        if let ObjVal::PrimFunc(f) = &*self.cadr()?.val.borrow() {
+            f(args)
         } else {
             Err("Tried to apply something other \
                  than primitive procedure"
@@ -444,9 +430,6 @@ impl Obj {
         }
     }
 }
-
-
-
 
 #[cfg(test)]
 mod tests {

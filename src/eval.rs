@@ -23,7 +23,7 @@ fn eval_if(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
 }
 
 fn make_procedure(parameters: Obj, body: Obj, env: &mut Env) -> Obj {
-    Obj::new_list(
+    Obj::list_from_vec(
         vec![
             Obj::new_symb("procedure".to_owned(), None),
             parameters,
@@ -56,24 +56,12 @@ fn apply(procedure: Obj, arguments: Obj) -> EvalResult<Obj> {
     }
 }
 
-fn cons(x: Obj, xs: Obj) -> EvalResult<Obj> {
-    if let ObjVal::List(ys) = &*xs.val.borrow() {
-        let mut zs = ys.clone();
-        zs.insert(0, x);
-        Ok(Obj::new_list(zs, None))
-    } else {
-        Err("cons encounters non-list".to_string())
-    }
-}
-
 fn list_of_values(exps: Obj, env: &mut Env) -> EvalResult<Obj> {
     if exps.has_no_operands()? {
-        Ok(Obj::new_list(vec![], None))
+        Ok(Obj::empty_list(exps.loc.clone()))
     } else {
-        cons(
-            eval(exps.first_operand()?, env)?,
-            list_of_values(exps.rest_operands()?, env)?,
-        )
+        Ok( Obj::cons( eval(exps.first_operand()?, env)?,
+                       list_of_values(exps.rest_operands()?, env)? ))
     }
 }
 
@@ -162,13 +150,13 @@ mod tests {
     }
     // ---------------------------------------------------------------------------------------------
 
-    //#[test]
+    #[test]
     fn test_eval_cdr() {
         let prog = "(cdr (list 1 2 3))";
         let result = eval_str(prog).unwrap();
         assert_eq!(
             result,
-            Obj::new_list(vec!(Obj::new_int(2, None), Obj::new_int(3, None)), None)
+            Obj::list_from_vec(vec!(Obj::new_int(2, None), Obj::new_int(3, None)), None)
         );
     }
 
@@ -187,8 +175,7 @@ mod tests {
         let parse_results = parser.list().unwrap();
         let obj = parse_results.to_obj();
         let result = list_of_values(obj.operands().unwrap(), &mut env).unwrap();
-
-        let inner = Obj::new_list(vec![Obj::new_int(1, None), Obj::new_int(2, None)], None);
+        let inner = Obj::list_from_vec(vec![Obj::new_int(1, None), Obj::new_int(2, None)], None);
         assert_eq!(result, inner);
     }
 
@@ -196,15 +183,15 @@ mod tests {
     fn test_list_list() {
         let prog = "(list (list 1 2))";
         let result = eval_str(prog).unwrap();
-        let inner = Obj::new_list(vec![Obj::new_int(1, None), Obj::new_int(2, None)], None);
-        let outer = Obj::new_list(vec![inner], None);
+        let inner = Obj::list_from_vec(vec![Obj::new_int(1, None), Obj::new_int(2, None)], None);
+        let outer = Obj::list_from_vec(vec![inner], None);
         assert_eq!(result, outer);
     }
 
     #[test]
     fn test_eval_seq_1() {
         let mut env = Env::the_global_environment();
-        let seq = Obj::new_list(vec![Obj::new_int(2, None), Obj::new_int(3, None)], None);
+        let seq = Obj::list_from_vec(vec![Obj::new_int(2, None), Obj::new_int(3, None)], None);
         let result = eval_sequence(seq, &mut env).unwrap();
         assert_eq!(result, Obj::new_int(3, None));
     }
@@ -215,16 +202,8 @@ mod tests {
         let result = eval_str(prog).unwrap();
         assert_eq!(
             result,
-            Obj::new_list(vec!(Obj::new_int(2, None), Obj::new_int(3, None),), None)
+            Obj::list_from_vec(vec!(Obj::new_int(2, None), Obj::new_int(3, None),), None)
         );
-    }
-
-    #[test]
-    fn test_cons() {
-        let xs = Obj::new_list(vec![Obj::new_int(1, None)], None);
-        let x = Obj::new_int(0, None);
-        let expect = Obj::new_list(vec![Obj::new_int(0, None), Obj::new_int(1, None)], None);
-        assert_eq!(cons(x, xs), Ok(expect));
     }
 
     #[test]
@@ -233,7 +212,7 @@ mod tests {
         let result = eval_str(prog).unwrap();
         assert_eq!(
             result,
-            Obj::new_list(vec!(Obj::new_int(1, None), Obj::new_int(2, None),), None)
+            Obj::list_from_vec(vec!(Obj::new_int(1, None), Obj::new_int(2, None),), None)
         );
     }
 
@@ -243,16 +222,17 @@ mod tests {
         let result = eval_str(prog).unwrap();
         assert_eq!(
             result,
-            Obj::new_list(vec!(Obj::new_int(1, None), Obj::new_int(1, None),), None)
+            Obj::list_from_vec(vec!(Obj::new_int(1, None), Obj::new_int(1, None),), None)
         );
     }
 
     #[test]
     fn apply_1() {
         let result = eval_str("(list 1 2 3)").unwrap();
+        println!("result: {:?}", result);
         assert_eq!(
             result,
-            Obj::new_list(
+            Obj::list_from_vec(
                 vec!(
                     Obj::new_int(1, None),
                     Obj::new_int(2, None),

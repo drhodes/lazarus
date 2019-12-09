@@ -27,20 +27,29 @@ fn is_null(xs: Obj) -> EvalResult<Obj> {
     Ok(Obj::new_bool(xs.is_null()?, xs.loc.clone()))
 }
 
-fn mul(xs: Obj) -> EvalResult<Obj> {
-    let mut result: i64 = 1;
-    for x in xs.list_items()?.iter() {
-        if let ObjVal::Int(n) = *x.val.borrow() {
-            result *= n;
-        } else {
-            return Err(format!("mul: needs numbers, got: {:?}", x));
-        }
-    }   
-    Ok(Obj::new_int(result, xs.loc.clone()))
+// fn mul(xs: Obj) -> EvalResult<Obj> {
+//     if xs.is_empty_list()? {
+//         Ok(Obj::new_int(1, xs.loc.clone()))
+//     } else xs.list_length()? == 1 {
+//         if let ObjVal::Int(n) = *xs.car()?.val.borrow() {
+//             result *= n;
+//             mul(xs.cdr()?)
+//         } else {
+//             return Err(format!("mul: needs numbers, got: {:?}", xs));
+//         }
+//     }
+// }
+
+fn cons(xs: Obj) -> EvalResult<Obj> {
+    if xs.list_length()? != 2 {
+        Err(format!("cons must take 2 args, got: {:?}", xs))
+    } else {
+        Ok(Obj::cons(xs.car()?, xs.cadr()?))
+    }
 }
 
 fn eq(xs: Obj) -> EvalResult<Obj> {
-    Ok(Obj::new_bool(xs.list_items()?[0] == xs.list_items()?[1], None))
+    Ok(Obj::new_bool(xs.car()? == xs.cadr()?, None))
 }
 
 
@@ -66,32 +75,29 @@ impl Env {
         env.add_primitive_func("cdr", cdr);
         env.add_primitive_func("list", list);
         env.add_primitive_func("null?", is_null);
-        env.add_primitive_func("mul", mul);
+        //env.add_primitive_func("mul", mul);
+        env.add_primitive_func("cons", cons);
         env.add_primitive_func("eq?", eq);
         env
     }
     
     pub fn add_primitive_func(&mut self, funcname: &str, func: fn(Obj) -> EvalResult<Obj>) {
-        let proc = Obj::new_list(
+        let proc = Obj::list_from_vec(
             vec![Obj::new_symb("primitive".to_owned(), None),
                  Obj::new_primitive_func(func, None)],
             None,
         );
         self.define_variable(&Symb::new_unknown(funcname), proc);
-        
     }
     
-    pub fn extend(&mut self, params: Obj, arguments: Obj) -> EvalResult<()> {
+    pub fn extend(&mut self, params: Obj, arguments: Obj) -> EvalResult<()> {        
         if params.list_length()? != arguments.list_length()? {
             Err("params and args need to have same length".to_string())
-        } else {
-            let ps = params.list_items()?;
-            let args = arguments.list_items()?;
-
-            for (p, arg) in ps.iter().zip(args.iter()) {
-                self.define_variable(&p.to_symb()?, arg.clone());
-            }
+        } else if params.is_empty_list()? {
             Ok(())
+        } else {
+            self.define_variable(&params.car()?.to_symb()?, arguments.car()?);
+            self.extend(params.cdr()?, arguments.cdr()?)
         }
     }
 

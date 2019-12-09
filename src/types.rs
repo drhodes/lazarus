@@ -94,10 +94,11 @@ pub enum ObjVal {
     Symbol(String),
     Float(f64),
     Int(i64),
-    List(Vec<Obj>),
     Bool(bool),
     Env(Env),
     PrimFunc(fn(Obj) -> EvalResult<Obj>),
+    Cons(Obj, Obj),
+    Nil,
 }
 
 impl fmt::Debug for ObjVal {
@@ -106,10 +107,11 @@ impl fmt::Debug for ObjVal {
             ObjVal::Symbol(s) => write!(f, "'{}", s),
             ObjVal::Float(n) => write!(f, "{}", n),
             ObjVal::Int(n) => write!(f, "{}", n),
-            ObjVal::List(v) => write!(f, "{:?}", v),
             ObjVal::Bool(b) => write!(f, "{:?}", b),
             ObjVal::Env(_) => write!(f, "<env>"),
             ObjVal::PrimFunc(_) => write!(f, "<fn>"),
+            ObjVal::Cons(x, y) => write!(f, "({:?} . {:?})", x, y),
+            ObjVal::Nil => write!(f, "()"),
         }
     }
 }

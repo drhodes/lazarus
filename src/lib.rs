@@ -1,8 +1,8 @@
 #![feature(box_syntax)]
 #![feature(box_patterns)]
 #![allow(dead_code)]
-//#![allow(unused_imports)]
-//#![allow(unused_variables)]
+#![allow(unused_imports)]
+#![allow(unused_variables)]
 
 pub mod ast;
 pub mod env;

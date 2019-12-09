@@ -58,7 +58,7 @@ impl Ast {
                 for node in nodes {
                     objs.push(node.to_obj())
                 }
-                Obj::new_list(objs, None)
+                Obj::list_from_vec(objs, None)
             }
         }
     }
