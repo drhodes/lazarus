@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use std::hash::Hasher;
 use std::rc::Rc;
+use std::fmt;
 
 impl Symb {
     pub fn new(name: &str, filename: String, pos: usize) -> Symb {
@@ -88,7 +89,7 @@ impl PartialEq for Symb {
 
 impl Eq for Symb {}
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum ObjVal {
     Symbol(String),
     Float(f64),
@@ -99,11 +100,33 @@ pub enum ObjVal {
     PrimFunc(fn(Obj) -> EvalResult<Obj>),
 }
 
-#[derive(Debug, Clone)]
+impl fmt::Debug for ObjVal {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ObjVal::Symbol(s) => write!(f, "'{}", s),
+            ObjVal::Float(n) => write!(f, "{}", n),
+            ObjVal::Int(n) => write!(f, "{}", n),
+            ObjVal::List(v) => write!(f, "{:?}", v),
+            ObjVal::Bool(b) => write!(f, "{:?}", b),
+            ObjVal::Env(_) => write!(f, "<env>"),
+            ObjVal::PrimFunc(_) => write!(f, "<fn>"),
+        }
+    }
+}
+
+#[derive(Clone)]
 pub struct Obj {
     pub val: Rc<RefCell<ObjVal>>,
     pub loc: Option<Loc>, // experimental
 }
+
+impl fmt::Debug for Obj {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self.val.borrow())
+    }
+}
+
+
 
 impl PartialEq for Obj {
     fn eq(&self, other: &Self) -> bool {
