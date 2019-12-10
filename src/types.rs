@@ -5,6 +5,12 @@ use std::hash::Hasher;
 use std::rc::Rc;
 use std::fmt;
 
+
+pub fn mutcell<T>(x: T) -> Rc<RefCell<T>> {
+    Rc::new(RefCell::new(x))
+}
+
+
 impl Symb {
     pub fn new(name: &str, filename: String, pos: usize) -> Symb {
         Symb {
@@ -140,7 +146,7 @@ impl Eq for Obj {}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Env {
-    pub frame: Frame,
+    pub frame: Rc<RefCell<Frame>>,
     /// if enclosing is None, then it is the global environment.
     pub enclosing: Option<Box<Env>>,
 }

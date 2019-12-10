@@ -31,6 +31,7 @@ fn make_procedure(parameters: Obj, body: Obj, env: &mut Env) -> Obj {
             parameters,
             body,
             // achtung‽ Cloning a whole environment here.
+            // need to overhaul env so frames are shared.
             Obj::new_env(env.clone(), None),
         ],
         None,
@@ -117,7 +118,7 @@ pub fn eval(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     }
     // application?
     else if exp.is_application() {
-        println!("apply env: {:?}", env.frame.all_names()); 
+        println!("apply env: {:?}", env.frame.borrow().all_names()); 
         apply(
             eval(exp.operator()?, env)?,
             list_of_values(exp.operands()?, env)?,
@@ -166,20 +167,21 @@ mod tests {
     fn test_define_1() {
         let prog = "(begin (define foo (lambda (x) x)) (foo 4))";
         let (result, env) = eval_str_env(prog);
-        assert!(env.frame.all_names().contains(&"foo".to_string()));
+        assert!(env.frame.borrow().all_names().contains(&"foo".to_string()));
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), Obj::new_int(4, None));
     }
 
 
     
-    //#[test]
+    #[test]
     fn test_define_2() {
-        let prog = "(begin (define fact (lambda (x) (fact x))) (fact 3) 4)";
-        let (result, env) = eval_str_env(prog);
-        assert!(env.frame.all_names().contains(&"fact".to_string()));
-        println!("env:    {:?}", env.frame.all_names()); 
-        println!("result: {:?}", result);
+        // expect stack overflow
+        // let prog = "(begin (define fact (lambda (x) (fact x))) (fact 3) 4)";
+        // let (result, env) = eval_str_env(prog);
+        // assert!(env.frame.borrow().all_names().contains(&"fact".to_string()));
+        // println!("env:    {:?}", env.frame.borrow().all_names()); 
+        // println!("result: {:?}", result);
         //assert!(result.is_ok());
         //assert_eq!(result.unwrap(), Obj::new_int(4, None));
     }
@@ -188,7 +190,7 @@ mod tests {
     fn test_define_3() {
         let prog = "(begin (define temp 42) (define foo (lambda () temp)) (foo))";
         let (result, env) = eval_str_env(prog);
-        assert!(env.frame.all_names().contains(&"foo".to_string()));
+        assert!(env.frame.borrow().all_names().contains(&"foo".to_string()));
         println!("{:?}", result);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), Obj::new_int(42, None));
@@ -209,13 +211,13 @@ mod tests {
 "#;
         let (result, env) = eval_str_env(prog);
         //assert!(env.frame.all_names().contains(&"f1".to_string()));
-        println!("env:    {:?}", env.frame.all_names()); 
+        println!("env:    {:?}", env.frame.borrow().all_names()); 
         println!("result: {:?}", result);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), Obj::new_int(4, None));
     }
 
-    //#[test]
+    #[test]
     fn test_define_5() {
         let prog = r#"
 (begin 
@@ -229,11 +231,10 @@ mod tests {
 
 "#;
         let (result, env) = eval_str_env(prog);
-        //assert!(env.frame.all_names().contains(&"f1".to_string()));
-        println!("env:    {:?}", env.frame.all_names()); 
+        println!("env:    {:?}", env.frame.borrow().all_names()); 
         println!("result: {:?}", result);
         assert!(result.is_ok());
-        //assert_eq!(result.unwrap(), Obj::new_int(4, None));
+        assert_eq!(result.unwrap(), Obj::new_int(1, None));
     }
 
     

@@ -59,11 +59,12 @@ fn eq(xs: Obj) -> EvalResult<Obj> {
 }
 
 
+
 // ------------------------------------------------------------------
 impl Env {
     pub fn new(id: usize) -> Env {
         Env {
-            frame: Frame::new(id),
+            frame: mutcell(Frame::new(id)),
             enclosing: None,
         }
     }
@@ -111,26 +112,26 @@ impl Env {
     pub fn is_global(&self) -> bool {
         self.enclosing.is_none()
     }
-
+    
     pub fn define_variable(&mut self, var: &Symb, obj: Obj) {
-        self.frame.insert(var.clone(), obj);
+        self.frame.borrow_mut().insert(var.clone(), obj);
     }
 
     // Returns the value that is bound to the symbol ⟨var⟩ in the
     // environment ⟨env⟩, or signals an error if the variable is
     // unbound.
     pub fn lookup_variable_value(&self, var: &Symb) -> EvalResult<Obj> {
-        match self.frame.get(var) {
+        match self.frame.borrow().get(var) {
             Some(value) => Ok(value),
             None => {
                 if self.is_global() {
-                    println!("LVV1 global {:?}, frame.id {}", self.frame.all_names(), self.frame.id);
-                    println!("LVV2 global {:?}", self.frame.all_names().contains(&var.name));
+                    //println!("LVV1 global {:?}, frame.id {}", self.frame.all_names(), self.frame.id);
+                    //println!("LVV2 global {:?}", self.frame.all_names().contains(&var.name));
                     Err(format!("undefined variable: {}", var.name))
                 } else {
-                    println!("name:{:?} not found in {:?}", var.name, self.frame.all_names());
-                    println!("LVV1 local {:?}, frame.id {}", self.frame.all_names(), self.frame.id);
-                    println!("LVV2 local {:?}", self.frame.all_names().contains(&var.name));
+                    // println!("name:{:?} not found in {:?}", var.name, self.frame.all_names());
+                    // println!("LVV1 local {:?}, frame.id {}", self.frame.all_names(), self.frame.id);
+                    // println!("LVV2 local {:?}", self.frame.all_names().contains(&var.name));
                     self.enclosing.as_ref().unwrap().lookup_variable_value(var)
                 }
             }
@@ -138,7 +139,8 @@ impl Env {
     }
 
     pub fn set_variable_value(&mut self, var: &Symb, obj: Obj) -> EvalResult<()> {
-        match self.frame.get(var) {
+        let val = self.frame.borrow().get(var);
+        match val {
             Some(..) => {
                 self.define_variable(var, obj);
                 Ok(())

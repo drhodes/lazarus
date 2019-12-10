@@ -13,6 +13,7 @@ impl Frame {
         self.symbol_table.insert(sym, obj);
     }
 
+    // get value stored in frame for a certain symbol
     pub fn get(&self, sym: &Symb) -> Option<Obj> {
         match self.symbol_table.get(sym) {
             Some(obj) => Some(obj.clone()),
