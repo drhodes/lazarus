@@ -163,6 +163,24 @@ mod tests {
     use super::*;
 
     #[test]
+    fn env_extend() {
+        let mut env = Env::new(0);
+        let sym1 = Obj::new_symb("x".to_owned(), None);
+        let obj1 = Obj::new_int(12, None);
+        let sym2 = Obj::new_symb("y".to_owned(), None);
+        let obj2 = Obj::new_int(13, None);
+        
+        let sym_list = Obj::list_from_vec(vec!(sym1.clone(), sym2.clone()), None);
+        let obj_list = Obj::list_from_vec(vec!(obj1.clone(), obj2.clone()), None);
+        env.extend(sym_list, obj_list);
+        
+        let result: Obj = env.lookup_variable_value(&sym1.to_symb().unwrap()).unwrap();
+        assert_eq!(result, obj1);
+        let result: Obj = env.lookup_variable_value(&sym2.to_symb().unwrap()).unwrap();
+        assert_eq!(result, obj2);
+    }
+
+    #[test]
     fn env_define_check() {
         let env = Env::new(0);
         let mut inner = Env::new(1);
