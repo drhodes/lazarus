@@ -70,6 +70,15 @@ impl Obj {
         }
     }
 
+    pub fn int_val(&self) -> EvalResult<i64> {
+        if let ObjVal::Int(n) = *self.val.borrow() {
+            Ok(n)
+        } else {
+            Err(format!("looking for an integer value, found: {:?}", self))
+        }
+        
+    }
+    
     pub fn is_list(&self) -> bool {
         match &*self.val.borrow() {
             ObjVal::Nil => true,
@@ -120,6 +129,14 @@ impl Obj {
 
     pub fn is_func(&self) -> bool {
         if let ObjVal::PrimFunc(..) = *self.val.borrow() {
+            true
+        } else {
+            false
+        }
+    }
+    
+    pub fn is_cons(&self) -> bool {
+        if let ObjVal::Cons(..) = *self.val.borrow() {
             true
         } else {
             false
@@ -273,11 +290,8 @@ impl Obj {
     }
 
     fn make_lambda(params: Obj, body: Obj) -> Obj {
-        unimplemented!();
-        // Obj::new_list(
-        //     vec![Obj::new_symb("lambda".to_string(), None), params, body],
-        //     None,
-        // )
+        let lambda = Obj::new_symb("lambda".to_string(), None);
+        Obj::cons(lambda, Obj::cons(params, body))
     }
 
    pub fn definition_value(&self) -> EvalResult<Obj> {
@@ -350,12 +364,8 @@ impl Obj {
     // }
 
     // apply helpers -------------------------------------------------------------------------------
-    pub fn is_application(&self) -> EvalResult<bool> {
-        if self.is_list() {
-            Ok(self.list_length()? > 1)
-        } else {
-            Ok(false)
-        }
+    pub fn is_application(&self) -> bool {
+        self.is_cons()
     }
 
     pub fn operator(&self) -> EvalResult<Obj> {

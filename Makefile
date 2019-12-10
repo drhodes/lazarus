@@ -19,7 +19,7 @@ build: ## build
 test: ## test
 	cargo test
 
-test-watch: export RUST_BACKTRACE = 1
+#test-watch: export RUST_BACKTRACE = 1
 test-watch: ## test on file change
 	cargo watch -x test
 

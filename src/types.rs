@@ -147,6 +147,7 @@ pub struct Env {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Frame {
+    pub id: usize,
     pub symbol_table: HashMap<Symb, Obj>,
 }
 

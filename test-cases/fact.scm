@@ -1,4 +1,4 @@
 (begin
-
-  (eq 1 1)
+  (define (square x) x)
+  (square 4)
   )

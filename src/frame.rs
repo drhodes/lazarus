@@ -2,8 +2,9 @@ use crate::types::*;
 use std::collections::HashMap;
 
 impl Frame {
-    pub fn new() -> Frame {
+    pub fn new(id: usize) -> Frame {
         Frame {
+            id,
             symbol_table: HashMap::new(),
         }
     }
@@ -18,6 +19,10 @@ impl Frame {
             None => None,
         }
     }
+
+    pub fn all_names(&self) -> Vec<String> {
+        self.symbol_table.keys().map(|s| s.name.clone()).collect()
+    }
 }
 
 #[cfg(test)]
@@ -26,7 +31,7 @@ mod tests {
 
     #[test]
     fn frame_1() {
-        let mut f = Frame::new();
+        let mut f = Frame::new(0);
         let sym1 = Symb::new("a", "test.scm".to_owned(), 0);
         let obj1 = Obj::new_int(42, None);
 

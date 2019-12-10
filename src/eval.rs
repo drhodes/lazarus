@@ -10,8 +10,9 @@ fn eval_assignment(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
 fn eval_definition(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     let var = exp.definition_variable()?.to_symb()?;
     let val = eval(exp.definition_value()?, env)?;
+    println!("defining_variable: {:?}", var);
     env.define_variable(&var, val.clone());
-    Ok(val.clone())
+    Ok(Obj::new_symb("ok".to_owned(), exp.loc.clone()))
 }
 
 fn eval_if(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
@@ -22,6 +23,7 @@ fn eval_if(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     }
 }
 
+// drill 
 fn make_procedure(parameters: Obj, body: Obj, env: &mut Env) -> Obj {
     Obj::list_from_vec(
         vec![
@@ -52,7 +54,7 @@ fn apply(procedure: Obj, arguments: Obj) -> EvalResult<Obj> {
         env.extend(procedure.parameters()?, arguments)?;
         eval_sequence(procedure.body()?, &mut env)
     } else {
-        Err(format!("Uknown procedure type: APPLY: {:?}", procedure))
+        Err(format!("Unknown procedure type: APPLY: {:?}", procedure))
     }
 }
 
@@ -114,7 +116,8 @@ pub fn eval(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
         eval_sequence(exp.begin_actions()?, env)
     }
     // application?
-    else if exp.is_application()? {
+    else if exp.is_application() {
+        println!("apply env: {:?}", env.frame.all_names()); 
         apply(
             eval(exp.operator()?, env)?,
             list_of_values(exp.operands()?, env)?,
@@ -148,8 +151,101 @@ mod tests {
         println!("obj: {:?}", obj);
         eval(obj, &mut env)
     }
-    // ---------------------------------------------------------------------------------------------
 
+    fn eval_str_env(s: &str) -> (EvalResult<Obj>, Env) {
+        let mut env = Env::the_global_environment();
+        let mut parser = get_parser(s);
+        let parse_results = parser.list().unwrap();
+        let obj = parse_results.to_obj();
+        println!("obj: {:?}", obj);
+        (eval(obj, &mut env), env)
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    #[test]
+    fn test_define_1() {
+        let prog = "(begin (define foo (lambda (x) x)) (foo 4))";
+        let (result, env) = eval_str_env(prog);
+        assert!(env.frame.all_names().contains(&"foo".to_string()));
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), Obj::new_int(4, None));
+    }
+
+
+    
+    //#[test]
+    fn test_define_2() {
+        let prog = "(begin (define fact (lambda (x) (fact x))) (fact 3) 4)";
+        let (result, env) = eval_str_env(prog);
+        assert!(env.frame.all_names().contains(&"fact".to_string()));
+        println!("env:    {:?}", env.frame.all_names()); 
+        println!("result: {:?}", result);
+        //assert!(result.is_ok());
+        //assert_eq!(result.unwrap(), Obj::new_int(4, None));
+    }
+    
+    #[test]
+    fn test_define_3() {
+        let prog = "(begin (define temp 42) (define foo (lambda () temp)) (foo))";
+        let (result, env) = eval_str_env(prog);
+        assert!(env.frame.all_names().contains(&"foo".to_string()));
+        println!("{:?}", result);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), Obj::new_int(42, None));
+    }
+
+
+    #[test]
+    fn test_define_4() {
+        let prog = r#"
+(begin 
+
+(define f1 (lambda (x) x))
+(define f2 (lambda (x) (f1 x)))
+(define f3 (lambda (x) (f2 x)))
+(f3 4)
+)
+
+"#;
+        let (result, env) = eval_str_env(prog);
+        //assert!(env.frame.all_names().contains(&"f1".to_string()));
+        println!("env:    {:?}", env.frame.all_names()); 
+        println!("result: {:?}", result);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), Obj::new_int(4, None));
+    }
+
+    //#[test]
+    fn test_define_5() {
+        let prog = r#"
+(begin 
+
+(define countdown (lambda (n)
+ (if (eq? n 0) 1
+  (countdown (dec n)))))
+
+(countdown 3)
+)
+
+"#;
+        let (result, env) = eval_str_env(prog);
+        //assert!(env.frame.all_names().contains(&"f1".to_string()));
+        println!("env:    {:?}", env.frame.all_names()); 
+        println!("result: {:?}", result);
+        assert!(result.is_ok());
+        //assert_eq!(result.unwrap(), Obj::new_int(4, None));
+    }
+
+    
+    
+    #[test]
+    fn test_empty_list() {
+        let prog = "(list)";
+        let result = eval_str(prog).unwrap();
+        assert_eq!( result, Obj::list_from_vec(vec!(), None));
+    }
+
+    
     #[test]
     fn test_eval_cdr() {
         let prog = "(cdr (list 1 2 3))";
@@ -285,7 +381,7 @@ mod tests {
 
     #[test]
     fn eval_definition_1() {
-        let mut env = Env::new();
+        let mut env = Env::new(0);
         let sym = Symb::new("foo", "test-eval.rs".to_owned(), 0);
         let mut parser = get_parser("(define foo 42)");
         let parse_results = parser.list().unwrap();
@@ -299,7 +395,7 @@ mod tests {
 
     #[test]
     fn eval_assign_1() {
-        let mut env = Env::new();
+        let mut env = Env::new(0);
         let sym = Symb::new("foo", "test-eval.rs".to_owned(), 0);
         env.define_variable(&sym, Obj::new_int(123, None));
 
@@ -316,8 +412,8 @@ mod tests {
 
     #[test]
     fn eval_assign_2() {
-        let mut env1 = Env::new();
-        let mut env2 = Env::new();
+        let mut env1 = Env::new(0);
+        let mut env2 = Env::new(1);
         let sym = Symb::new("foo", "test-eval.rs".to_owned(), 0);
 
         env1.define_variable(&sym, Obj::new_int(123, None));
@@ -344,7 +440,7 @@ mod tests {
     #[test]
     fn self_evaluating_1() {
         let obj = Obj::new_int(128, None);
-        let mut env = Env::new();
+        let mut env = Env::new(0);
         let result = eval(obj.clone(), &mut env).unwrap();
         assert_eq!(result, obj);
     }
@@ -352,7 +448,7 @@ mod tests {
     #[test]
     fn eval_lookup_variable_1() {
         let obj = Obj::new_int(128, None);
-        let mut env = Env::new();
+        let mut env = Env::new(0);
         let sym = Symb::new("x", "test-eval.rs".to_owned(), 42);
         env.define_variable(&sym, obj.clone());
         let obj2 = env.lookup_variable_value(&sym).unwrap();

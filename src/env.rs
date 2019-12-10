@@ -1,7 +1,6 @@
 use crate::types::*;
 
 // primitive procedures
-
 // these primitive procedures accept a list of arguments.
 
 fn car(xs: Obj) -> EvalResult<Obj> {
@@ -27,18 +26,25 @@ fn is_null(xs: Obj) -> EvalResult<Obj> {
     Ok(Obj::new_bool(xs.is_null()?, xs.loc.clone()))
 }
 
-// fn mul(xs: Obj) -> EvalResult<Obj> {
-//     if xs.is_empty_list()? {
-//         Ok(Obj::new_int(1, xs.loc.clone()))
-//     } else xs.list_length()? == 1 {
-//         if let ObjVal::Int(n) = *xs.car()?.val.borrow() {
-//             result *= n;
-//             mul(xs.cdr()?)
-//         } else {
-//             return Err(format!("mul: needs numbers, got: {:?}", xs));
-//         }
-//     }
-// }
+fn mul(xs: Obj) -> EvalResult<Obj> {
+    match xs.list_length()? {
+        0 => Ok(Obj::new_int(1, xs.loc.clone())),
+        1 => xs.car(),
+        _ => {
+            let a = xs.car()?.int_val()?;
+            let b = xs.cadr()?.int_val()?;
+            let c = Obj::new_int(a*b, xs.loc.clone());
+            let ys = Obj::cons(c, xs.cddr()?);
+            mul(ys)
+        }
+    }
+}
+
+fn dec(xs: Obj) -> EvalResult<Obj> {
+    let x = xs.car()?.int_val()?;
+    Ok(Obj::new_int(x-1, xs.loc.clone()))
+}
+
 
 fn cons(xs: Obj) -> EvalResult<Obj> {
     if xs.list_length()? != 2 {
@@ -55,15 +61,15 @@ fn eq(xs: Obj) -> EvalResult<Obj> {
 
 // ------------------------------------------------------------------
 impl Env {
-    pub fn new() -> Env {
+    pub fn new(id: usize) -> Env {
         Env {
-            frame: Frame::new(),
+            frame: Frame::new(id),
             enclosing: None,
         }
     }
     
     pub fn the_global_environment() -> Env {
-        let mut env = Env::new();
+        let mut env = Env::new(0);
         let mut add_obj = |s: &str, obj| {
             env.define_variable(&Symb::new_unknown(s), obj);
         };
@@ -75,9 +81,10 @@ impl Env {
         env.add_primitive_func("cdr", cdr);
         env.add_primitive_func("list", list);
         env.add_primitive_func("null?", is_null);
-        //env.add_primitive_func("mul", mul);
+        env.add_primitive_func("mul", mul);
         env.add_primitive_func("cons", cons);
         env.add_primitive_func("eq?", eq);
+        env.add_primitive_func("dec", dec);
         env
     }
     
@@ -117,8 +124,13 @@ impl Env {
             Some(value) => Ok(value),
             None => {
                 if self.is_global() {
-                    Err(format!("undefine variable: {:?}", var))
+                    println!("LVV1 global {:?}, frame.id {}", self.frame.all_names(), self.frame.id);
+                    println!("LVV2 global {:?}", self.frame.all_names().contains(&var.name));
+                    Err(format!("undefined variable: {}", var.name))
                 } else {
+                    println!("name:{:?} not found in {:?}", var.name, self.frame.all_names());
+                    println!("LVV1 local {:?}, frame.id {}", self.frame.all_names(), self.frame.id);
+                    println!("LVV2 local {:?}", self.frame.all_names().contains(&var.name));
                     self.enclosing.as_ref().unwrap().lookup_variable_value(var)
                 }
             }
@@ -152,8 +164,8 @@ mod tests {
 
     #[test]
     fn env_define_check() {
-        let env = Env::new();
-        let mut inner = Env::new();
+        let env = Env::new(0);
+        let mut inner = Env::new(1);
         let sym = Symb::new("x", "env.rs".to_owned(), 42);
         let obj1 = Obj::new_int(12, None);
         let _obj3 = Obj::new_int(345345, None);
@@ -168,9 +180,9 @@ mod tests {
 
     #[test]
     fn env_define_outer_check() {
-        let mut outer = Env::new();
-        let mut mid = Env::new();
-        let mut inner = Env::new();
+        let mut outer = Env::new(0);
+        let mut mid = Env::new(1);
+        let mut inner = Env::new(2);
         let sym = Symb::new("x", "env.rs".to_owned(), 42);
         let obj1 = Obj::new_int(12, None);
         let _obj3 = Obj::new_int(345345, None);
