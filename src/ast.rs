@@ -80,7 +80,6 @@ impl Ast {
             }
             &Ast::Node { rule, nodes } => {
                 match rule {
-                    //Rule::Expr => nodes[0].pretty(),
                     Rule::List => {
                         print!("(");
                         let mut limit = nodes.len();

@@ -22,5 +22,4 @@ fn main() {
     let filename = "test-cases/fact.scm";
     let prog = fs::read_to_string(filename);
     println!("{:?}", eval_str(&prog.unwrap(), filename));
-        
 }

@@ -1,4 +1,6 @@
 (begin
-  (define (square x) x)
-  (square 4)
+  (define fact (lambda (n)
+                 (if (eq? n 0) 1
+                     (mul n (fact (dec n))))))
+  (fact 4)
   )

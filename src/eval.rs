@@ -23,15 +23,13 @@ fn eval_if(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     }
 }
 
-// drill 
+// drill
 fn make_procedure(parameters: Obj, body: Obj, env: &mut Env) -> Obj {
     Obj::list_from_vec(
         vec![
             Obj::new_symb("procedure".to_owned(), None),
             parameters,
             body,
-            // achtung‽ Cloning a whole environment here.
-            // need to overhaul env so frames are shared.
             Obj::new_env(env.clone(), None),
         ],
         None,
@@ -63,8 +61,10 @@ fn list_of_values(exps: Obj, env: &mut Env) -> EvalResult<Obj> {
     if exps.has_no_operands()? {
         Ok(Obj::empty_list(exps.loc.clone()))
     } else {
-        Ok( Obj::cons( eval(exps.first_operand()?, env)?,
-                       list_of_values(exps.rest_operands()?, env)? ))
+        Ok(Obj::cons(
+            eval(exps.first_operand()?, env)?,
+            list_of_values(exps.rest_operands()?, env)?,
+        ))
     }
 }
 
@@ -118,7 +118,7 @@ pub fn eval(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     }
     // application?
     else if exp.is_application() {
-        println!("apply env: {:?}", env.frame.borrow().all_names()); 
+        println!("apply env: {:?}", env.frame.borrow().all_names());
         apply(
             eval(exp.operator()?, env)?,
             list_of_values(exp.operands()?, env)?,
@@ -172,20 +172,18 @@ mod tests {
         assert_eq!(result.unwrap(), Obj::new_int(4, None));
     }
 
-
-    
     #[test]
     fn test_define_2() {
         // expect stack overflow
         // let prog = "(begin (define fact (lambda (x) (fact x))) (fact 3) 4)";
         // let (result, env) = eval_str_env(prog);
         // assert!(env.frame.borrow().all_names().contains(&"fact".to_string()));
-        // println!("env:    {:?}", env.frame.borrow().all_names()); 
+        // println!("env:    {:?}", env.frame.borrow().all_names());
         // println!("result: {:?}", result);
         //assert!(result.is_ok());
         //assert_eq!(result.unwrap(), Obj::new_int(4, None));
     }
-    
+
     #[test]
     fn test_define_3() {
         let prog = "(begin (define temp 42) (define foo (lambda () temp)) (foo))";
@@ -195,7 +193,6 @@ mod tests {
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), Obj::new_int(42, None));
     }
-
 
     #[test]
     fn test_define_4() {
@@ -211,7 +208,7 @@ mod tests {
 "#;
         let (result, env) = eval_str_env(prog);
         //assert!(env.frame.all_names().contains(&"f1".to_string()));
-        println!("env:    {:?}", env.frame.borrow().all_names()); 
+        println!("env:    {:?}", env.frame.borrow().all_names());
         println!("result: {:?}", result);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), Obj::new_int(4, None));
@@ -231,22 +228,19 @@ mod tests {
 
 "#;
         let (result, env) = eval_str_env(prog);
-        println!("env:    {:?}", env.frame.borrow().all_names()); 
+        println!("env:    {:?}", env.frame.borrow().all_names());
         println!("result: {:?}", result);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), Obj::new_int(1, None));
     }
 
-    
-    
     #[test]
     fn test_empty_list() {
         let prog = "(list)";
         let result = eval_str(prog).unwrap();
-        assert_eq!( result, Obj::list_from_vec(vec!(), None));
+        assert_eq!(result, Obj::list_from_vec(vec!(), None));
     }
 
-    
     #[test]
     fn test_eval_cdr() {
         let prog = "(cdr (list 1 2 3))";
