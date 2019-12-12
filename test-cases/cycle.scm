@@ -1,10 +1,16 @@
 (begin
   (define mkCycle (lambda ()
                     (define x 1)
-                    (define y 2)
-                    (define z 3)
-                    (set! x (list y))
-                    (set! y (list x))))
-  (mkCycle)
-  (list z)
+                    (set! x (list x))
+                    (quote ok)))
+  (define calln (lambda (f n)
+                  (if (eq? n 0) (quote ok)
+                      (begin                        
+                        (f)
+                        (calln f (dec n))))))
+  
+  (define monster1 (lambda () (calln mkCycle 50)))
+  (define monster2 (lambda () (calln monster1 100)))
+  (define monster3 (lambda () (calln monster2 100)))
+  (monster1)
   )
