@@ -73,7 +73,7 @@ pub fn extend_environment(params: Obj, arguments: Obj, enclosing_env: Env) -> Ev
         Err("params and args need to have same length".to_string())
     } else {
         let frame = Frame::from_var_vals(params, arguments)?;
-        let mut env = Env::new(666); // TODO move Frame::id field into Env.
+        let mut env = Env::new(enclosing_env.id + 1); // TODO move Frame::id field into Env.
         env.frame = mutcell(frame);
         env.enclosing = Some(box enclosing_env);
         Ok(env)
