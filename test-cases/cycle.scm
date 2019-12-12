@@ -1,3 +1,10 @@
 (begin
-  42
+  (define mkCycle (lambda ()
+                    (define x 1)
+                    (define y 2)
+                    (define z 3)
+                    (set! x (list y))
+                    (set! y (list x))))
+  (mkCycle)
+  (list z)
   )

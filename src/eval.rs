@@ -24,13 +24,13 @@ fn eval_if(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
 }
 
 // drill
-fn make_procedure(parameters: Obj, body: Obj, env: &mut Env) -> Obj {
+fn make_procedure(parameters: Obj, body: Obj, env: Env) -> Obj {
     Obj::list_from_vec(
         vec![
             Obj::new_symb("procedure".to_owned(), None),
             parameters,
             body,
-            Obj::new_env(env.clone(), None),
+            Obj::from_env(env, None),
         ],
         None,
     )
@@ -49,9 +49,9 @@ fn apply(procedure: Obj, arguments: Obj) -> EvalResult<Obj> {
     if procedure.is_primitive_procedure() {
         procedure.primitive_apply_to(arguments)
     } else if procedure.is_compound_procedure() {
-        let mut env = procedure.environment()?;
-        env.extend(procedure.parameters()?, arguments)?;
-        eval_sequence(procedure.body()?, &mut env)
+        let env = procedure.environment()?;
+        let mut next_env = extend_environment(procedure.parameters()?, arguments, env.clone())?;
+        eval_sequence(procedure.body()?, &mut next_env)
     } else {
         Err(format!("Unknown procedure type: APPLY: {:?}", procedure))
     }
@@ -67,6 +67,19 @@ fn list_of_values(exps: Obj, env: &mut Env) -> EvalResult<Obj> {
         ))
     }
 }
+
+pub fn extend_environment(params: Obj, arguments: Obj, enclosing_env: Env) -> EvalResult<Env> {        
+    if params.list_length()? != arguments.list_length()? {
+        Err("params and args need to have same length".to_string())
+    } else {
+        let frame = Frame::from_var_vals(params, arguments)?;
+        let mut env = Env::new(666); // TODO move Frame::id field into Env.
+        env.frame = mutcell(frame);
+        env.enclosing = Some(box enclosing_env);
+        Ok(env)
+    }
+}
+
 
 // ________________________________________________________________________________
 //                                            _
@@ -109,16 +122,15 @@ pub fn eval(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
         Ok(make_procedure(
             exp.lambda_parameters()?,
             exp.lambda_body()?,
-            env,
+            env.clone(),
         ))
-    }
+    }    
     // begin?
     else if exp.is_begin() {
         eval_sequence(exp.begin_actions()?, env)
     }
     // application?
     else if exp.is_application() {
-        println!("apply env: {:?}", env.frame.borrow().all_names());
         apply(
             eval(exp.operator()?, env)?,
             list_of_values(exp.operands()?, env)?,
@@ -162,7 +174,21 @@ mod tests {
         (eval(obj, &mut env), env)
     }
 
-    // ---------------------------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------------------
+    #[test]
+    fn eval_assure_lambda_scopes_dont_leak() {
+        let prog = r#"
+(begin
+  (define noleak (lambda () (define z 3)))
+  (noleak)
+  z
+  )
+"#;
+        let result = eval_str(prog);        
+        //assert!(result.is_ok());
+        assert_eq!(result, Err("undefined variable: z".to_string()));
+    }
+    
     #[test]
     fn test_define_1() {
         let prog = "(begin (define foo (lambda (x) x)) (foo 4))";
@@ -215,7 +241,7 @@ mod tests {
     }
 
     #[test]
-    fn test_define_5() {
+    fn eval_recursion_simple_1() {
         let prog = r#"
 (begin 
 

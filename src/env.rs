@@ -26,6 +26,11 @@ fn is_null(xs: Obj) -> EvalResult<Obj> {
     Ok(Obj::new_bool(xs.car()?.is_null()?, xs.loc.clone()))
 }
 
+// fn foldr(f: fn(Obj) -> EvalResult<Obj>, unit: Obj, xs: Obj) {
+//     if !xs.is_list()? {
+//     }
+// }
+
 fn mul(xs: Obj) -> EvalResult<Obj> {
     match xs.list_length()? {
         0 => Ok(Obj::new_int(1, xs.loc.clone())),
@@ -65,6 +70,7 @@ impl Env {
     pub fn new(id: usize) -> Env {
         Env {
             frame: mutcell(Frame::new(id)),
+            //frame: Frame::new(id),
             enclosing: None,
         }
     }
@@ -98,16 +104,16 @@ impl Env {
         self.define_variable(&Symb::new_unknown(funcname), proc);
     }
     
-    pub fn extend(&mut self, params: Obj, arguments: Obj) -> EvalResult<()> {        
-        if params.list_length()? != arguments.list_length()? {
-            Err("params and args need to have same length".to_string())
-        } else if params.is_empty_list()? {
-            Ok(())
-        } else {
-            self.define_variable(&params.car()?.to_symb()?, arguments.car()?);
-            self.extend(params.cdr()?, arguments.cdr()?)
-        }
-    }
+    // pub fn extend(&mut self, params: Obj, arguments: Obj) -> EvalResult<()> {        
+    //     if params.list_length()? != arguments.list_length()? {
+    //         Err("params and args need to have same length".to_string())
+    //     } else if params.is_empty_list()? {
+    //         Ok(())
+    //     } else {
+    //         self.define_variable(&params.car()?.to_symb()?, arguments.car()?);
+    //         self.extend(params.cdr()?, arguments.cdr()?)
+    //     }
+    // }
 
     pub fn is_global(&self) -> bool {
         self.enclosing.is_none()
@@ -163,24 +169,6 @@ impl Env {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn env_extend() {
-        let mut env = Env::new(0);
-        let sym1 = Obj::new_symb("x".to_owned(), None);
-        let obj1 = Obj::new_int(12, None);
-        let sym2 = Obj::new_symb("y".to_owned(), None);
-        let obj2 = Obj::new_int(13, None);
-        
-        let sym_list = Obj::list_from_vec(vec!(sym1.clone(), sym2.clone()), None);
-        let obj_list = Obj::list_from_vec(vec!(obj1.clone(), obj2.clone()), None);
-        env.extend(sym_list, obj_list);
-        
-        let result: Obj = env.lookup_variable_value(&sym1.to_symb().unwrap()).unwrap();
-        assert_eq!(result, obj1);
-        let result: Obj = env.lookup_variable_value(&sym2.to_symb().unwrap()).unwrap();
-        assert_eq!(result, obj2);
-    }
 
     #[test]
     fn env_define_check() {

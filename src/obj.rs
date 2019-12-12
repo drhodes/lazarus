@@ -46,7 +46,7 @@ impl Obj {
         Obj::new(ObjVal::Bool(b), loc)
     }
 
-    pub fn new_env(env: Env, loc: Option<Loc>) -> Obj {
+    pub fn from_env(env: Env, loc: Option<Loc>) -> Obj {
         Obj::new(ObjVal::Env(env), loc)
     }
 
