@@ -23,7 +23,7 @@ fn list(xs: Obj) -> EvalResult<Obj> {
 }
 
 fn is_null(xs: Obj) -> EvalResult<Obj> {
-    Ok(Obj::new_bool(xs.is_null()?, xs.loc.clone()))
+    Ok(Obj::new_bool(xs.car()?.is_null()?, xs.loc.clone()))
 }
 
 fn mul(xs: Obj) -> EvalResult<Obj> {

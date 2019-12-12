@@ -19,7 +19,7 @@ fn eval_str(s: &str, filename: &str) -> EvalResult<Obj> {
 }
 
 fn main() {
-    let filename = "test-cases/fact.scm";
+    let filename = "test-cases/cycle.scm";
     let prog = fs::read_to_string(filename);
     println!("{:?}", eval_str(&prog.unwrap(), filename));
 }
