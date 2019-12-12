@@ -69,8 +69,8 @@ fn eq(xs: Obj) -> EvalResult<Obj> {
 impl Env {
     pub fn new(id: usize) -> Env {
         Env {
-            frame: mutcell(Frame::new(id)),
-            //frame: Frame::new(id),
+            id: id,
+            frame: mutcell(Frame::new()),
             enclosing: None,
         }
     }

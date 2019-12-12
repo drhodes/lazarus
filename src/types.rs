@@ -146,6 +146,7 @@ impl Eq for Obj {}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Env {
+    pub id: usize,
     pub frame: Rc<RefCell<Frame>>,
     /// if enclosing is None, then it is the global environment.
     pub enclosing: Option<Box<Env>>,
@@ -153,7 +154,6 @@ pub struct Env {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Frame {
-    pub id: usize,
     pub symbol_table: HashMap<Symb, Obj>,
 }
 

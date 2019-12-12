@@ -2,18 +2,15 @@ use crate::types::*;
 use std::collections::HashMap;
 
 impl Frame {
-    pub fn new(id: usize) -> Frame {
-        Frame {
-            id,
-            symbol_table: HashMap::new(),
-        }
+    pub fn new() -> Frame {
+        Frame { symbol_table: HashMap::new() }
     }
 
     pub fn from_var_vals(mut params: Obj, mut arguments: Obj) -> EvalResult<Frame> {
         if params.list_length()? != arguments.list_length()? {
             Err("Frame got bad constructor params, unmatched lengths".to_string())
         } else {
-            let mut frame = Frame::new(666); // TODO move Frame::id field out to env
+            let mut frame = Frame::new();
         
             while !params.is_null()? {
                 frame.insert(
@@ -52,7 +49,7 @@ mod tests {
 
     #[test]
     fn frame_1() {
-        let mut f = Frame::new(0);
+        let mut f = Frame::new();
         let sym1 = Symb::new("a", "test.scm".to_owned(), 0);
         let obj1 = Obj::new_int(42, None);
 
