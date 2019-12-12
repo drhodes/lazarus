@@ -45,11 +45,24 @@ fn mul(xs: Obj) -> EvalResult<Obj> {
     }
 }
 
+fn add(xs: Obj) -> EvalResult<Obj> {
+    match xs.list_length()? {
+        0 => Ok(Obj::new_int(0, xs.loc.clone())),
+        1 => xs.car(),
+        _ => {
+            let a = xs.car()?.int_val()?;
+            let b = xs.cadr()?.int_val()?;
+            let c = Obj::new_int(a+b, xs.loc.clone());
+            let ys = Obj::cons(c, xs.cddr()?);
+            add(ys)
+        }
+    }
+}
+
 fn dec(xs: Obj) -> EvalResult<Obj> {
     let x = xs.car()?.int_val()?;
     Ok(Obj::new_int(x-1, xs.loc.clone()))
 }
-
 
 fn cons(xs: Obj) -> EvalResult<Obj> {
     if xs.list_length()? != 2 {
@@ -83,12 +96,16 @@ impl Env {
 
         add_obj("true", Obj::new_bool(true, None));
         add_obj("false", Obj::new_bool(false, None));
+        add_obj("#t", Obj::new_bool(true, None));
+        add_obj("#f", Obj::new_bool(false, None));
         
         env.add_primitive_func("car", car);
         env.add_primitive_func("cdr", cdr);
         env.add_primitive_func("list", list);
         env.add_primitive_func("null?", is_null);
         env.add_primitive_func("mul", mul);
+        env.add_primitive_func("*", mul);
+        env.add_primitive_func("+", add);
         env.add_primitive_func("cons", cons);
         env.add_primitive_func("eq?", eq);
         env.add_primitive_func("dec", dec);
