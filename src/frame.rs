@@ -3,7 +3,9 @@ use std::collections::HashMap;
 
 impl Frame {
     pub fn new() -> Frame {
-        Frame { symbol_table: HashMap::new() }
+        Frame {
+            symbol_table: HashMap::new(),
+        }
     }
 
     pub fn from_var_vals(mut params: Obj, mut arguments: Obj) -> EvalResult<Frame> {
@@ -11,21 +13,16 @@ impl Frame {
             Err("Frame got bad constructor params, unmatched lengths".to_string())
         } else {
             let mut frame = Frame::new();
-        
+
             while !params.is_null()? {
-                frame.insert(
-                    params.car()?.to_symb()?,
-                    arguments.car()?
-                );
+                frame.insert(params.car()?.to_symb()?, arguments.car()?);
                 params = params.cdr()?;
                 arguments = arguments.cdr()?;
             }
             Ok(frame)
         }
-        
     }
-        
-    
+
     pub fn insert(&mut self, sym: Symb, obj: Obj) {
         self.symbol_table.insert(sym, obj);
     }

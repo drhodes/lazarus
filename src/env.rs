@@ -38,7 +38,7 @@ fn mul(xs: Obj) -> EvalResult<Obj> {
         _ => {
             let a = xs.car()?.int_val()?;
             let b = xs.cadr()?.int_val()?;
-            let c = Obj::new_int(a*b, xs.loc.clone());
+            let c = Obj::new_int(a * b, xs.loc.clone());
             let ys = Obj::cons(c, xs.cddr()?);
             mul(ys)
         }
@@ -52,7 +52,7 @@ fn add(xs: Obj) -> EvalResult<Obj> {
         _ => {
             let a = xs.car()?.int_val()?;
             let b = xs.cadr()?.int_val()?;
-            let c = Obj::new_int(a+b, xs.loc.clone());
+            let c = Obj::new_int(a + b, xs.loc.clone());
             let ys = Obj::cons(c, xs.cddr()?);
             add(ys)
         }
@@ -61,7 +61,7 @@ fn add(xs: Obj) -> EvalResult<Obj> {
 
 fn dec(xs: Obj) -> EvalResult<Obj> {
     let x = xs.car()?.int_val()?;
-    Ok(Obj::new_int(x-1, xs.loc.clone()))
+    Ok(Obj::new_int(x - 1, xs.loc.clone()))
 }
 
 fn cons(xs: Obj) -> EvalResult<Obj> {
@@ -76,8 +76,6 @@ fn eq(xs: Obj) -> EvalResult<Obj> {
     Ok(Obj::new_bool(xs.car()? == xs.cadr()?, None))
 }
 
-
-
 // ------------------------------------------------------------------
 impl Env {
     pub fn new(id: usize) -> Env {
@@ -87,7 +85,7 @@ impl Env {
             enclosing: None,
         }
     }
-    
+
     pub fn the_global_environment() -> Env {
         let mut env = Env::new(0);
         let mut add_obj = |s: &str, obj| {
@@ -98,7 +96,7 @@ impl Env {
         add_obj("false", Obj::new_bool(false, None));
         add_obj("#t", Obj::new_bool(true, None));
         add_obj("#f", Obj::new_bool(false, None));
-        
+
         env.add_primitive_func("car", car);
         env.add_primitive_func("cdr", cdr);
         env.add_primitive_func("list", list);
@@ -111,17 +109,19 @@ impl Env {
         env.add_primitive_func("dec", dec);
         env
     }
-    
+
     pub fn add_primitive_func(&mut self, funcname: &str, func: fn(Obj) -> EvalResult<Obj>) {
         let proc = Obj::list_from_vec(
-            vec![Obj::new_symb("primitive".to_owned(), None),
-                 Obj::new_primitive_func(func, None)],
+            vec![
+                Obj::new_symb("primitive".to_owned(), None),
+                Obj::new_primitive_func(func, None),
+            ],
             None,
         );
         self.define_variable(&Symb::new_unknown(funcname), proc);
     }
-    
-    // pub fn extend(&mut self, params: Obj, arguments: Obj) -> EvalResult<()> {        
+
+    // pub fn extend(&mut self, params: Obj, arguments: Obj) -> EvalResult<()> {
     //     if params.list_length()? != arguments.list_length()? {
     //         Err("params and args need to have same length".to_string())
     //     } else if params.is_empty_list()? {
@@ -135,7 +135,7 @@ impl Env {
     pub fn is_global(&self) -> bool {
         self.enclosing.is_none()
     }
-    
+
     pub fn define_variable(&mut self, var: &Symb, obj: Obj) {
         self.frame.borrow_mut().insert(var.clone(), obj);
     }

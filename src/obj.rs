@@ -21,7 +21,7 @@ impl Obj {
     pub fn nil(loc: Option<Loc>) -> Obj {
         Obj::new(ObjVal::Nil, loc)
     }
-    
+
     pub fn list_from_vec(xs: Vec<Obj>, loc: Option<Loc>) -> Obj {
         let mut list = Obj::empty_list(loc.clone());
         for x in xs.iter().rev() {
@@ -29,15 +29,15 @@ impl Obj {
         }
         list
     }
-    
+
     pub fn empty_list(loc: Option<Loc>) -> Obj {
         Obj::new(ObjVal::Nil, loc)
     }
-    
+
     pub fn cons(x: Obj, y: Obj) -> Obj {
         Obj::new(ObjVal::Cons(x.clone(), y.clone()), x.loc.clone())
     }
-    
+
     pub fn new_symb(name: String, loc: Option<Loc>) -> Obj {
         Obj::new(ObjVal::Symbol(name), loc)
     }
@@ -53,7 +53,7 @@ impl Obj {
     pub fn new_primitive_func(f: fn(Obj) -> EvalResult<Obj>, loc: Option<Loc>) -> Obj {
         Obj::new(ObjVal::PrimFunc(f), loc)
     }
-    
+
     // the Symb type exists and Obj::Symbol exists.
     // Symb is convenient.
     // Obj::Symbol can be stored on the heap.
@@ -76,14 +76,13 @@ impl Obj {
         } else {
             Err(format!("looking for an integer value, found: {:?}", self))
         }
-        
     }
-    
+
     pub fn is_list(&self) -> bool {
         match &*self.val.borrow() {
             ObjVal::Nil => true,
-            ObjVal::Cons(x, y) => y.is_list(),
-            _ => false
+            ObjVal::Cons(_, y) => y.is_list(),
+            _ => false,
         }
     }
 
@@ -134,7 +133,7 @@ impl Obj {
             false
         }
     }
-    
+
     pub fn is_cons(&self) -> bool {
         if let ObjVal::Cons(..) = *self.val.borrow() {
             true
@@ -164,7 +163,7 @@ impl Obj {
             return "symbol";
         }
     }
-    
+
     pub fn is_empty_list(&self) -> EvalResult<bool> {
         Ok(ObjVal::Nil == *self.val.borrow())
     }
@@ -172,21 +171,21 @@ impl Obj {
     pub fn list_length(&self) -> EvalResult<usize> {
         match &*self.val.borrow() {
             ObjVal::Nil => Ok(0),
-            ObjVal::Cons(x, y) => Ok(y.list_length()? + 1),
+            ObjVal::Cons(_, y) => Ok(y.list_length()? + 1),
             _ => Err("list_length was not passed a list".to_owned()),
         }
     }
 
     pub fn car(&self) -> EvalResult<Obj> {
         match &*self.val.borrow() {
-            ObjVal::Cons(x, y) => Ok(x.clone()),
+            ObjVal::Cons(x, _) => Ok(x.clone()),
             _ => Err("car was not passed a cons cell".to_owned()),
         }
     }
 
     pub fn cdr(&self) -> EvalResult<Obj> {
         match &*self.val.borrow() {
-            ObjVal::Cons(x, y) => Ok(y.clone()),
+            ObjVal::Cons(_, y) => Ok(y.clone()),
             _ => Err("object passed to cdr is not the correct type.".to_owned()),
         }
     }
@@ -294,7 +293,7 @@ impl Obj {
         Obj::cons(lambda, Obj::cons(params, body))
     }
 
-   pub fn definition_value(&self) -> EvalResult<Obj> {
+    pub fn definition_value(&self) -> EvalResult<Obj> {
         if self.cadr()?.is_symbol() {
             self.caddr()
         } else {
@@ -398,10 +397,10 @@ impl Obj {
     }
 
     pub fn primitive_apply_to(&self, args: Obj) -> EvalResult<Obj> {
-        println!("self: {:?} ", self); 
-        println!("args: {:?} ", args);
-        println!("prim: {:?} ", self.cadr()?);
-       
+        // println!("self: {:?} ", self);
+        // println!("args: {:?} ", args);
+        // println!("prim: {:?} ", self.cadr()?);
+
         if let ObjVal::PrimFunc(f) = &*self.cadr()?.val.borrow() {
             f(args)
         } else {

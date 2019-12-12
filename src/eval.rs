@@ -10,7 +10,7 @@ fn eval_assignment(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
 fn eval_definition(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
     let var = exp.definition_variable()?.to_symb()?;
     let val = eval(exp.definition_value()?, env)?;
-    println!("defining_variable: {:?}", var);
+    //println!("defining_variable: {:?}", var);
     env.define_variable(&var, val.clone());
     Ok(Obj::new_symb("ok".to_owned(), exp.loc.clone()))
 }
@@ -68,7 +68,7 @@ fn list_of_values(exps: Obj, env: &mut Env) -> EvalResult<Obj> {
     }
 }
 
-pub fn extend_environment(params: Obj, arguments: Obj, enclosing_env: Env) -> EvalResult<Env> {        
+pub fn extend_environment(params: Obj, arguments: Obj, enclosing_env: Env) -> EvalResult<Env> {
     if params.list_length()? != arguments.list_length()? {
         Err("params and args need to have same length".to_string())
     } else {
@@ -79,7 +79,6 @@ pub fn extend_environment(params: Obj, arguments: Obj, enclosing_env: Env) -> Ev
         Ok(env)
     }
 }
-
 
 // ________________________________________________________________________________
 //                                            _
@@ -124,7 +123,7 @@ pub fn eval(exp: Obj, env: &mut Env) -> EvalResult<Obj> {
             exp.lambda_body()?,
             env.clone(),
         ))
-    }    
+    }
     // begin?
     else if exp.is_begin() {
         eval_sequence(exp.begin_actions()?, env)
@@ -184,11 +183,11 @@ mod tests {
   z
   )
 "#;
-        let result = eval_str(prog);        
+        let result = eval_str(prog);
         //assert!(result.is_ok());
         assert_eq!(result, Err("undefined variable: z".to_string()));
     }
-    
+
     #[test]
     fn test_define_1() {
         let prog = "(begin (define foo (lambda (x) x)) (foo 4))";

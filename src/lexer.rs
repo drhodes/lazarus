@@ -126,10 +126,10 @@ impl Iterator for Lexer {
                     self.idx = m.end();
                     return Some(Ok(Token::new(tok, m.start(), m.end())));
                 }
-            }            
+            }
             None => {}
         }
-        
+
         let b = self.prog.as_bytes()[self.idx];
         let c = b as char;
         self.idx += 1;
@@ -145,7 +145,6 @@ impl Iterator for Lexer {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -156,7 +155,7 @@ mod tests {
         let toks: Vec<Result<Token, LexError>> = lexer.collect();
         assert_eq!(4, toks.len());
     }
-    
+
     #[test]
     fn lex_some_unicode() {
         let lexer = Lexer::new("((εε))", "test.scm");
@@ -167,7 +166,6 @@ mod tests {
         assert_eq!(5, toks.len());
     }
 
-    
     #[test]
     fn lex_symbol_with_exclamation_as_second_char() {
         let mut lexer = Lexer::new("s! asdf asdf asdf", "test.scm");
@@ -182,30 +180,51 @@ mod tests {
             panic!("")
         }
     }
-    
+
     fn lex_char(s: &str) {
         let mut lexer = Lexer::new(s, "test.scm");
         if let Some(Ok(tok)) = lexer.next() {
             assert_eq!(tok.start, 0);
-            assert_eq!(
-                tok.tok,
-                Tok::Symbol(Symb::new(s, "test.scm".to_owned(), 0))
-            );
+            assert_eq!(tok.tok, Tok::Symbol(Symb::new(s, "test.scm".to_owned(), 0)));
             assert_eq!(tok.end, s.len());
         } else {
             panic!("")
         }
     }
 
-    #[test] fn lex_add() { lex_char("+"); }
-    #[test] fn lex_min() { lex_char("-"); }
-    #[test] fn lex_mul() { lex_char("*"); }
-    #[test] fn lex_div() { lex_char("/"); }
-    #[test] fn lex_lam() { lex_char("λ"); }
-    #[test] fn lex_eps() { lex_char("ε"); }
-    #[test] fn lex_pound() { lex_char("#"); }
-    #[test] fn lex_car() { lex_char("车"); }
-    
+    #[test]
+    fn lex_add() {
+        lex_char("+");
+    }
+    #[test]
+    fn lex_min() {
+        lex_char("-");
+    }
+    #[test]
+    fn lex_mul() {
+        lex_char("*");
+    }
+    #[test]
+    fn lex_div() {
+        lex_char("/");
+    }
+    #[test]
+    fn lex_lam() {
+        lex_char("λ");
+    }
+    #[test]
+    fn lex_eps() {
+        lex_char("ε");
+    }
+    #[test]
+    fn lex_pound() {
+        lex_char("#");
+    }
+    #[test]
+    fn lex_car() {
+        lex_char("车");
+    }
+
     #[test]
     fn lex_symbol_with_exclamation() {
         let mut lexer = Lexer::new("set! asdf asdf asdf", "test.scm");

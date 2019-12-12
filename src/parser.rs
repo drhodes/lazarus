@@ -8,7 +8,6 @@ pub struct Parser {
     filename: String,
     toks: Vec<Token>,
     idx: usize,
-    ast: Ast,
 }
 
 fn err(msg: &str) -> ParserResult {
@@ -35,7 +34,6 @@ impl Parser {
             filename,
             toks,
             idx: 0,
-            ast: Ast::empty(),
         }
     }
 
@@ -63,7 +61,7 @@ impl Parser {
         if self.toks.len() == 0 {
             self.filename.clone() + ": end of file"
         } else {
-            let pos = format!("char: {}", self.toks[0].start).to_owned();
+            let pos = format!("@ char: {}\n", self.toks[0].start).to_owned();
             self.filename.clone() + ": " + &pos
         }
     }
@@ -92,7 +90,6 @@ impl Parser {
     }
 
     pub fn expr(&mut self) -> ParserResult {
-        //println!("expr");
         let idx = self.idx;
 
         // this is boiler plate.
@@ -214,13 +211,13 @@ impl Parser {
 mod tests {
     use super::*;
     use crate::lexer::*;
-    
+
     fn get_tokens(s: &str) -> Vec<Token> {
         let lexer = Lexer::new(s, "test.scm");
         let mut toks = vec![];
         for span in lexer {
             if let Ok(token) = span {
-                if token.tok == Tok::Space {                    
+                if token.tok == Tok::Space {
                     continue;
                 }
                 println!("token: {:?}", token);
@@ -276,7 +273,7 @@ mod tests {
 
         match results {
             Ok(node) => match &node {
-                Ast::Node { rule, nodes:_ } => {
+                Ast::Node { rule, nodes: _ } => {
                     println!("{:?}", node);
                     node.pretty();
                     assert_eq!(rule, &Rule::List);
@@ -296,7 +293,7 @@ mod tests {
 
         match results {
             Ok(xs) => match xs {
-                Ast::Node { rule:_, nodes } => {
+                Ast::Node { rule: _, nodes } => {
                     assert_eq!(nodes.len(), 4);
                 }
                 _ => panic!("This should not be a leaf!"),
@@ -341,12 +338,12 @@ mod tests {
 
     #[test]
     fn parse_unicode_list() {
-        let mut parser = get_parser("( ε )");        
+        let mut parser = get_parser("( ε )");
         if let Err(msg) = parser.list() {
             panic!(msg);
         }
     }
-    
+
     #[test]
     fn parse_unicode_symbol1() {
         let mut parser = get_parser("asdfε");
@@ -363,7 +360,6 @@ mod tests {
         }
     }
 
-    
     #[test]
     fn parse_unicode_symbol() {
         let mut parser = get_parser("ε");
@@ -372,7 +368,6 @@ mod tests {
         }
     }
 
-    
     #[test]
     fn parse_lparen() {
         let mut parser = get_parser("(");

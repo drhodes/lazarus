@@ -1,9 +1,9 @@
 use std::fs;
 
+use lazarus::eval::eval;
 use lazarus::lexer::Lexer;
 use lazarus::parser::Parser;
 use lazarus::types::*;
-use lazarus::eval::eval;
 
 fn get_parser(s: &str, filename: &str) -> Parser {
     let lexer = Lexer::new(s, filename);
@@ -18,8 +18,8 @@ fn eval_str(s: &str, filename: &str) -> EvalResult<Obj> {
     eval(obj, &mut env)
 }
 
-fn main() { 
-    let filename = "test-cases/cycle.scm";
+fn main() {
+    let filename = "test-cases/unicode-map.scm";
     let prog = fs::read_to_string(filename);
     println!("{:?}", eval_str(&prog.unwrap(), filename));
 }

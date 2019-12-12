@@ -53,7 +53,7 @@ impl Ast {
     pub fn to_obj(&self) -> Obj {
         match &self {
             Ast::Leaf(leaf) => leaf.to_obj(),
-            Ast::Node { rule:_, nodes } => {
+            Ast::Node { rule: _, nodes } => {
                 let mut objs = vec![];
                 for node in nodes {
                     objs.push(node.to_obj())
