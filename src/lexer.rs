@@ -55,6 +55,7 @@ pub enum LexError {}
 
 pub struct Lexer {
     idx: usize,
+    byte_length: usize,
     prog: String,
     pub filename: String,
 }
@@ -63,6 +64,7 @@ impl Lexer {
     pub fn new(input: &str, filename: &str) -> Self {
         Lexer {
             idx: 0,
+            byte_length: input.len(),
             prog: input.to_owned(),
             filename: filename.to_owned(),
         }
@@ -73,26 +75,14 @@ impl Iterator for Lexer {
     type Item = Result<Token, LexError>; //Spanned<Tok, usize, LexError>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.idx >= self.prog.len() {
+        if self.idx >= self.byte_length {
             return None;
         }
-        let symbol_pat = Regex::new(r#"[a-zA-Z][\\!a-zA-Z0-9?]*"#).unwrap();
+        let symbol_pat = Regex::new(r#"[&$#/\~\*\-+\p{L}][&$#/\~\*\-+\p{L}\\!0-9?]*"#).unwrap();
         let float_pat = Regex::new(r"[-+]?[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?").unwrap();
         let int_pat = Regex::new(r"[-+]?[0-9]+").unwrap();
         let space_pat = Regex::new(r"[\s\n\t]+").unwrap();
         // symbol_pat.
-
-        // can we parse a symbol?
-        match symbol_pat.find_at(&self.prog, self.idx) {
-            Some(m) => {
-                if m.start() == self.idx {
-                    let tok = Tok::Symbol(Symb::new(m.as_str(), self.filename.clone(), m.start()));
-                    self.idx = m.end();
-                    return Some(Ok(Token::new(tok, m.start(), m.end())));
-                }
-            }
-            None => {}
-        }
 
         // order matters! must try to parse float before int.
         match float_pat.find_at(&self.prog, self.idx) {
@@ -128,22 +118,33 @@ impl Iterator for Lexer {
             None => {}
         }
 
-        if let Some(c) = self.prog.chars().nth(self.idx) {
-            self.idx += 1;
-            if c == ')' {
-                return Some(Ok(Token::new(Tok::RParen, self.idx - 1, self.idx)));
-            } else if c == '(' {
-                return Some(Ok(Token::new(Tok::LParen, self.idx - 1, self.idx)));
-            } else if c == '.' {
-                return Some(Ok(Token::new(Tok::Dot, self.idx - 1, self.idx)));
-            } else {
-                return None;
-            }
+        match symbol_pat.find_at(&self.prog, self.idx) {
+            Some(m) => {
+                if m.start() == self.idx {
+                    let sym = m.as_str();
+                    let tok = Tok::Symbol(Symb::new(sym, self.filename.clone(), m.start()));
+                    self.idx = m.end();
+                    return Some(Ok(Token::new(tok, m.start(), m.end())));
+                }
+            }            
+            None => {}
+        }
+        
+        let b = self.prog.as_bytes()[self.idx];
+        let c = b as char;
+        self.idx += 1;
+        if c == ')' {
+            return Some(Ok(Token::new(Tok::RParen, self.idx - 1, self.idx)));
+        } else if c == '(' {
+            return Some(Ok(Token::new(Tok::LParen, self.idx - 1, self.idx)));
+        } else if c == '.' {
+            return Some(Ok(Token::new(Tok::Dot, self.idx - 1, self.idx)));
         } else {
             return None;
         }
     }
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -155,6 +156,18 @@ mod tests {
         let toks: Vec<Result<Token, LexError>> = lexer.collect();
         assert_eq!(4, toks.len());
     }
+    
+    #[test]
+    fn lex_some_unicode() {
+        let lexer = Lexer::new("((εε))", "test.scm");
+        let toks: Vec<Result<Token, LexError>> = lexer.collect();
+        for t in toks.iter() {
+            println!("token: {:?}", t);
+        }
+        assert_eq!(5, toks.len());
+    }
+
+    
     #[test]
     fn lex_symbol_with_exclamation_as_second_char() {
         let mut lexer = Lexer::new("s! asdf asdf asdf", "test.scm");
@@ -169,7 +182,30 @@ mod tests {
             panic!("")
         }
     }
+    
+    fn lex_char(s: &str) {
+        let mut lexer = Lexer::new(s, "test.scm");
+        if let Some(Ok(tok)) = lexer.next() {
+            assert_eq!(tok.start, 0);
+            assert_eq!(
+                tok.tok,
+                Tok::Symbol(Symb::new(s, "test.scm".to_owned(), 0))
+            );
+            assert_eq!(tok.end, s.len());
+        } else {
+            panic!("")
+        }
+    }
 
+    #[test] fn lex_add() { lex_char("+"); }
+    #[test] fn lex_min() { lex_char("-"); }
+    #[test] fn lex_mul() { lex_char("*"); }
+    #[test] fn lex_div() { lex_char("/"); }
+    #[test] fn lex_lam() { lex_char("λ"); }
+    #[test] fn lex_eps() { lex_char("ε"); }
+    #[test] fn lex_pound() { lex_char("#"); }
+    #[test] fn lex_car() { lex_char("车"); }
+    
     #[test]
     fn lex_symbol_with_exclamation() {
         let mut lexer = Lexer::new("set! asdf asdf asdf", "test.scm");

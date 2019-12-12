@@ -220,24 +220,26 @@ mod tests {
         let mut toks = vec![];
         for span in lexer {
             if let Ok(token) = span {
-                if token.tok == Tok::Space {
+                if token.tok == Tok::Space {                    
                     continue;
                 }
+                println!("token: {:?}", token);
                 toks.push(token);
             } else {
                 panic!("failed to lex a string");
             }
         }
+        println!("tokens: {:?}", toks);
         toks
     }
 
     fn get_parser(s: &str) -> Parser {
         let lexer = Lexer::new(s, "test.scm");
+        println!("lexer: {:?}", get_tokens(s));
         Parser::new(lexer)
     }
 
     #[test]
-    // this test should fail because the list doesn't have a close paren.
     fn parse_to_obj_1() {
         let mut parser = get_parser("(1 2 (3))");
         let results = parser.list();
@@ -337,6 +339,40 @@ mod tests {
         }
     }
 
+    #[test]
+    fn parse_unicode_list() {
+        let mut parser = get_parser("( ε )");        
+        if let Err(msg) = parser.list() {
+            panic!(msg);
+        }
+    }
+    
+    #[test]
+    fn parse_unicode_symbol1() {
+        let mut parser = get_parser("asdfε");
+        if let Err(msg) = parser.expr() {
+            panic!(msg);
+        }
+    }
+
+    #[test]
+    fn parse_unicode_symbol2() {
+        let mut parser = get_parser("εasdf");
+        if let Err(msg) = parser.expr() {
+            panic!(msg);
+        }
+    }
+
+    
+    #[test]
+    fn parse_unicode_symbol() {
+        let mut parser = get_parser("ε");
+        if let Err(msg) = parser.expr() {
+            panic!(msg);
+        }
+    }
+
+    
     #[test]
     fn parse_lparen() {
         let mut parser = get_parser("(");
