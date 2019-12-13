@@ -59,6 +59,21 @@ fn add(xs: Obj) -> EvalResult<Obj> {
     }
 }
 
+fn sub(xs: Obj) -> EvalResult<Obj> {
+    match xs.list_length()? {
+        0 => Ok(Obj::new_int(0, xs.loc.clone())),
+        1 => xs.car(),
+        _ => {
+            let a = xs.car()?.int_val()?;
+            let b = xs.cadr()?.int_val()?;
+            let c = Obj::new_int(a - b, xs.loc.clone());
+            let ys = Obj::cons(c, xs.cddr()?);
+            add(ys)
+        }
+    }
+}
+
+
 fn dec(xs: Obj) -> EvalResult<Obj> {
     let x = xs.car()?.int_val()?;
     Ok(Obj::new_int(x - 1, xs.loc.clone()))
@@ -104,6 +119,7 @@ impl Env {
         env.add_primitive_func("mul", mul);
         env.add_primitive_func("*", mul);
         env.add_primitive_func("+", add);
+        env.add_primitive_func("-", sub);
         env.add_primitive_func("cons", cons);
         env.add_primitive_func("eq?", eq);
         env.add_primitive_func("dec", dec);
