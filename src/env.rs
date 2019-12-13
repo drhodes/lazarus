@@ -137,17 +137,6 @@ impl Env {
         self.define_variable(&Symb::new_unknown(funcname), proc);
     }
 
-    // pub fn extend(&mut self, params: Obj, arguments: Obj) -> EvalResult<()> {
-    //     if params.list_length()? != arguments.list_length()? {
-    //         Err("params and args need to have same length".to_string())
-    //     } else if params.is_empty_list()? {
-    //         Ok(())
-    //     } else {
-    //         self.define_variable(&params.car()?.to_symb()?, arguments.car()?);
-    //         self.extend(params.cdr()?, arguments.cdr()?)
-    //     }
-    // }
-
     pub fn is_global(&self) -> bool {
         self.enclosing.is_none()
     }
@@ -164,13 +153,8 @@ impl Env {
             Some(value) => Ok(value),
             None => {
                 if self.is_global() {
-                    //println!("LVV1 global {:?}, frame.id {}", self.frame.all_names(), self.frame.id);
-                    //println!("LVV2 global {:?}", self.frame.all_names().contains(&var.name));
                     Err(format!("undefined variable: {}", var.name))
                 } else {
-                    // println!("name:{:?} not found in {:?}", var.name, self.frame.all_names());
-                    // println!("LVV1 local {:?}, frame.id {}", self.frame.all_names(), self.frame.id);
-                    // println!("LVV2 local {:?}", self.frame.all_names().contains(&var.name));
                     self.enclosing.as_ref().unwrap().lookup_variable_value(var)
                 }
             }
