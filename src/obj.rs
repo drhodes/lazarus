@@ -94,6 +94,14 @@ impl Obj {
         }
     }
 
+    pub fn as_float(&self) -> EvalResult<f64> {
+        match *self.val.borrow() {
+            ObjVal::Float(n) => Ok(n),
+            ObjVal::Int(n) => Ok(n as f64),
+            _ => Err("may only covert float or int to float".to_string()),
+        }
+    }
+
     pub fn is_int(&self) -> bool {
         if let ObjVal::Int(..) = *self.val.borrow() {
             return true;

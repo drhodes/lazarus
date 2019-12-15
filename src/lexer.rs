@@ -78,7 +78,7 @@ impl Iterator for Lexer {
         if self.idx >= self.byte_length {
             return None;
         }
-        let symbol_pat = Regex::new(r#"[&$#/\~\*\-+\p{L}][&$#/\~\*\-+\p{L}\\!0-9?]*"#).unwrap();
+        let symbol_pat = Regex::new(r#"[<>&$#/\~\*\-+\p{L}][<>&$#/\~\*\-+\p{L}\\!0-9?]*"#).unwrap();
         let float_pat = Regex::new(r"[-+]?[0-9]*\.[0-9]+([eE][-+]?[0-9]+)?").unwrap();
         let int_pat = Regex::new(r"[-+]?[0-9]+").unwrap();
         let space_pat = Regex::new(r"[\s\n\t]+").unwrap();

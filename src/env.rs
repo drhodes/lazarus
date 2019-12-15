@@ -91,6 +91,20 @@ fn eq(xs: Obj) -> EvalResult<Obj> {
     Ok(Obj::new_bool(xs.car()? == xs.cadr()?, None))
 }
 
+fn lt(xs: Obj) -> EvalResult<Obj> {
+    // TODO make this work for more than two args.
+    let lhs = xs.car()?.as_float()?;
+    let rhs = xs.cadr()?.as_float()?;
+    Ok(Obj::new_bool(lhs < rhs, None))
+}
+
+fn gt(xs: Obj) -> EvalResult<Obj> {
+    // TODO make this work for more than two args.
+    let lhs = xs.car()?.as_float()?;
+    let rhs = xs.cadr()?.as_float()?;
+    Ok(Obj::new_bool(lhs > rhs, None))
+}
+
 // ------------------------------------------------------------------
 impl Env {
     pub fn new(id: usize) -> Env {
@@ -120,6 +134,8 @@ impl Env {
         env.add_primitive_func("*", mul);
         env.add_primitive_func("+", add);
         env.add_primitive_func("-", sub);
+        env.add_primitive_func(">", gt);
+        env.add_primitive_func("<", lt);
         env.add_primitive_func("cons", cons);
         env.add_primitive_func("eq?", eq);
         env.add_primitive_func("dec", dec);
