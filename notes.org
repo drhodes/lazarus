@@ -1,0 +1,35 @@
+* Detecting cycles with valgrind
+** trial 1
+running cycle.scm with (monster2 50)
+
+==24917== 
+==24917== HEAP SUMMARY:
+==24917==     in use at exit: 27,031 bytes in 280 blocks
+==24917==   total heap usage: 286,391 allocs, 286,111 frees, 94,472,245 bytes allocated
+==24917== 
+==24917== LEAK SUMMARY:
+==24917==    definitely lost: 80 bytes in 1 blocks
+==24917==    indirectly lost: 26,903 bytes in 277 blocks
+==24917==      possibly lost: 0 bytes in 0 blocks
+==24917==    still reachable: 48 bytes in 2 blocks
+==24917==         suppressed: 0 bytes in 0 blocks
+==24917== Rerun with --leak-check=full to see details of leaked memory
+
+** trial 2
+running cycle.scm with (monster2 100)
+
+==24964== 
+==24964== HEAP SUMMARY:
+==24964==     in use at exit: 27,031 bytes in 280 blocks
+==24964==   total heap usage: 286,409 allocs, 286,129 frees, 94,472,307 bytes allocated
+==24964== 
+==24964== LEAK SUMMARY:
+==24964==    definitely lost: 80 bytes in 1 blocks
+==24964==    indirectly lost: 26,903 bytes in 277 blocks
+==24964==      possibly lost: 0 bytes in 0 blocks
+==24964==    still reachable: 48 bytes in 2 blocks
+==24964==         suppressed: 0 bytes in 0 blocks
+==24964== Rerun with --leak-check=full to see details of leaked memory
+==24964== 
+==24964== For counts of detected and suppressed errors, rerun with: -v
+==24964== ERROR SUMMARY: 2 errors from 2 contexts (suppressed: 0 from 0)
